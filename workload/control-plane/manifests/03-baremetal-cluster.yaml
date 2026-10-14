@@ -1,0 +1,20 @@
+# Default is External LB. For Internal Alive, set type: Internal and keep vrid.
+# For External, delete the vrid field before apply.
+# networkDevice is the CNI NIC. Override a single host on the pool instead.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: BaremetalCluster
+metadata:
+  name: <workload-cluster-name>
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: <workload-cluster-name>
+  annotations:
+    cpaas.io/registry-address: <platform-access-domain-or-vip>:11443
+spec:
+  controlPlaneLoadBalancer:
+    type: External
+    host: <workload-control-plane-vip>
+    port: 6443
+    # vrid: <workload-vrid>
+  networkType: kube-ovn
+  networkDevice: eth0

@@ -1,0 +1,42 @@
+# Apply on the finished Global AFTER handoff, using the platform domain registry.
+# Chart-internal global.cluster.type stays Baremetal for every IaaS.
+apiVersion: operator.alauda.io/v1alpha1
+kind: AppRelease
+metadata:
+  annotations:
+    auto-recycle: "true"
+    interval-sync: "true"
+  name: cluster-api-provider-kubeadm
+  namespace: cpaas-system
+spec:
+  destination:
+    cluster: ""
+    namespace: ""
+  source:
+    charts:
+      - name: ait/chart-cluster-api-provider-kubeadm
+        releaseName: cluster-api-provider-kubeadm
+        targetRevision: <kubeadm-provider-chart-version>
+        repoURL: <platform-access-domain-or-vip>:11443
+    timeout: 120
+    values:
+      global:
+        albName: global-alb2
+        auth:
+          default_admin: admin@cpaas.io
+        cluster:
+          isGlobal: true
+          name: global
+          networkType: kube-ovn
+          type: Baremetal
+        host: <platform-access-domain-or-vip>
+        ingress:
+          ingressClassName: global-alb2
+        labelBaseDomain: cpaas.io
+        namespace: cpaas-system
+        platformUrl: https://<platform-access-domain-or-vip>
+        region: global
+        registry:
+          address: <platform-access-domain-or-vip>:11443
+        replicas: 1
+        scheme: https

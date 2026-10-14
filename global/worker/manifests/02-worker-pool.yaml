@@ -1,0 +1,14 @@
+# Apply after global worker hosts have left Live ISO and are Ready=True.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: MachineInventoryPool
+metadata:
+  name: global-worker-pool
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: global
+spec:
+  clusterName: global
+  machineInventories:
+    - name: <global-worker-inventory-1>
+      hostname: global-worker-1
+      networkDevice: eth0

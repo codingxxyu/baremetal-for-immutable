@@ -1,0 +1,70 @@
+# Optional Global workers.
+# First delivery: skip this directory. Install three control-plane hosts only.
+# ISO: SeedImage status.downloadURL. Do not reuse the control-plane ISO.
+# Apply on bootstrap only if those workers must exist before installer/handoff;
+# then add their inventory names and this Registration to 04-dcs-import-extra-resources.yaml.
+# After handoff, do not use this bootstrap ISO. Change baseImage to
+#   <platform-access-domain-or-vip>:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+# and apply on the finished Global instead.
+# Do not reuse the control-plane ISO.
+apiVersion: elemental.cattle.io/v1beta1
+kind: MachineRegistration
+metadata:
+  name: global-worker-registration
+  namespace: cpaas-system
+  labels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    cpaas.io/cluster-name: global
+spec:
+  machineName: "global-worker-${System Information/UUID}"
+  machineInventoryLabels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    pool.baremetal.alauda.io/eligible: "true"
+    elemental.cattle.io/serial-number: "${System Information/Serial Number}"
+    cpaas.io/cluster-name: global
+  machineInventoryAnnotations:
+    elemental.cattle.io/machine-uuid: "${System Information/UUID}"
+  config:
+    elemental:
+      install:
+        device: /dev/elemental-install-target
+        eject-cd: true
+        reboot: true
+        snapshotter:
+          type: btrfs
+          maxSnaps: 4
+      registration:
+        emulate-tpm: true
+        emulated-tpm-seed: -1
+---
+apiVersion: elemental.cattle.io/v1beta1
+kind: SeedImage
+metadata:
+  name: global-worker-registration-iso
+  namespace: cpaas-system
+  labels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    cpaas.io/cluster-name: global
+spec:
+  type: iso
+  baseImage: 172.18.0.1:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+  registrationRef:
+    apiVersion: elemental.cattle.io/v1beta1
+    kind: MachineRegistration
+    name: global-worker-registration
+    namespace: cpaas-system
+  targetPlatform: linux/amd64
+  size: 20Gi
+  cleanupAfterMinutes: 120
+  cloud-config:
+    stages:
+      boot:
+        - name: "Size COS_STATE for reprovisioning"
+          files:
+            - path: /etc/elemental/config.d/partitions.yaml
+              permissions: 0644
+              content: |
+                install:
+                  partitions:
+                    state:
+                      size: 20480

@@ -1,0 +1,40 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: global-worker-deployment
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: global
+spec:
+  clusterName: global
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: global-worker-deployment
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/deployment-name: global-worker-deployment
+        cluster.x-k8s.io/cluster-name: global
+        pool.name: global-workers
+    spec:
+      clusterName: global
+      version: v1.35.6-acp.1
+      nodeDrainTimeout: 5m
+      nodeVolumeDetachTimeout: 5m
+      bootstrap:
+        configRef:
+          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          kind: KubeadmConfigTemplate
+          name: global-worker-kubeadm-config
+          namespace: cpaas-system
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: BaremetalMachineTemplate
+        name: global-worker-template
+        namespace: cpaas-system

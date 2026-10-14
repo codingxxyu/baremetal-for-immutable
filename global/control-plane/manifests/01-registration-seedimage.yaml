@@ -1,0 +1,71 @@
+# Apply on the bootstrap cluster AFTER the Bare Metal provider is Ready
+# and elemental-image-catalog contains v1.35.6-acp.1.
+# This ISO belongs to bootstrap. Do not reuse it after handoff.
+# Worker hosts use global/worker/manifests/01-registration-seedimage.yaml.
+#
+# After Ready: SeedImage status.downloadURL is the ISO; status.downloadToken
+# identifies the download. MachineRegistration status.registrationURL is a
+# credential — read it on the bootstrap node, do not commit it.
+# Official Global Step 4 YAML is a fragment. This file is the complete
+# Registration + SeedImage shape (create-cluster reference), not that fragment.
+apiVersion: elemental.cattle.io/v1beta1
+kind: MachineRegistration
+metadata:
+  name: global-registration
+  namespace: cpaas-system
+  labels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    cpaas.io/cluster-name: global
+spec:
+  machineName: "global-${System Information/UUID}"
+  machineInventoryLabels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    pool.baremetal.alauda.io/eligible: "true"
+    elemental.cattle.io/serial-number: "${System Information/Serial Number}"
+    cpaas.io/cluster-name: global
+  machineInventoryAnnotations:
+    elemental.cattle.io/machine-uuid: "${System Information/UUID}"
+  config:
+    elemental:
+      install:
+        device: /dev/elemental-install-target
+        eject-cd: true
+        reboot: true
+        snapshotter:
+          type: btrfs
+          maxSnaps: 4
+      registration:
+        emulate-tpm: true
+        emulated-tpm-seed: -1
+---
+apiVersion: elemental.cattle.io/v1beta1
+kind: SeedImage
+metadata:
+  name: global-registration-iso
+  namespace: cpaas-system
+  labels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    cpaas.io/cluster-name: global
+spec:
+  type: iso
+  baseImage: 172.18.0.1:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+  registrationRef:
+    apiVersion: elemental.cattle.io/v1beta1
+    kind: MachineRegistration
+    name: global-registration
+    namespace: cpaas-system
+  targetPlatform: linux/amd64
+  size: 20Gi
+  cleanupAfterMinutes: 120
+  cloud-config:
+    stages:
+      boot:
+        - name: "Size COS_STATE for reprovisioning"
+          files:
+            - path: /etc/elemental/config.d/partitions.yaml
+              permissions: 0644
+              content: |
+                install:
+                  partitions:
+                    state:
+                      size: 20480

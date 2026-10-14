@@ -1,0 +1,75 @@
+# Apply on the bootstrap cluster after:
+#   1. Bare Metal OS images are in the bootstrap registry
+#   2. 01-dex-tls-bootstrap.yaml is Ready
+#   3. packtool has pushed the Bare Metal provider chart
+#
+# Non-DR baseline. Do not set baremetal.cluster.io/system-agent-server-url
+# on the bootstrap MachineRegistration.
+# platformUrl and elemental.server.url stay on the bootstrap node until handoff.
+apiVersion: operator.alauda.io/v1alpha1
+kind: AppRelease
+metadata:
+  annotations:
+    auto-recycle: "true"
+    interval-sync: "true"
+  name: cluster-api-provider-baremetal
+  namespace: cpaas-system
+spec:
+  destination:
+    cluster: ""
+    namespace: ""
+  source:
+    charts:
+      - name: ait/chart-cluster-api-provider-baremetal
+        releaseName: cluster-api-provider-baremetal
+        targetRevision: <baremetal-provider-chart-version>
+        repoURL: 172.18.0.1:11443
+    timeout: 120
+    values:
+      global:
+        albName: global-alb2
+        auth:
+          default_admin: admin@cpaas.io
+        cluster:
+          isGlobal: true
+          name: global
+          networkType: kube-ovn
+          type: Baremetal
+        host: <platform-access-domain-or-vip>
+        ingress:
+          ingressClassName: global-alb2
+          tls:
+            secretName: dex.tls
+        labelBaseDomain: cpaas.io
+        namespace: cpaas-system
+        platformUrl: https://<bootstrap-host-ip>
+        region: global
+        registry:
+          address: 172.18.0.1:11443
+        replicas: 1
+        scheme: https
+      provider:
+        imageCatalog:
+          images:
+            v1.35.6-acp.1:
+              repository: tkestack/baremetal-base-image
+              tag: <os-image-tag>
+        handoffHook:
+          directAPIServer: false
+          controlPlaneVIP: <global-control-plane-vip>
+          delivery:
+            enabled: true
+            mode: always
+      elemental:
+        server:
+          url: https://<bootstrap-host-ip>:12443
+        systemAgent:
+          authMode: shared
+          splitAuthEnabled: false
+          serviceAccountName: baremetal-system-agent
+          globalServiceAccountName: baremetal-global-system-agent
+          sharedAuthReadOnly: false
+        tls:
+          agentTLSMode: strict
+          caCertSecretName: dex.tls
+          caCertSecretKey: ca.crt

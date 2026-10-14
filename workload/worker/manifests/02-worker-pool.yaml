@@ -1,0 +1,14 @@
+# Apply after workload worker hosts have left Live ISO and are Ready=True.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: MachineInventoryPool
+metadata:
+  name: <workload-cluster-name>-worker-pool
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: <workload-cluster-name>
+spec:
+  clusterName: <workload-cluster-name>
+  machineInventories:
+    - name: <workload-worker-inventory-1>
+      hostname: <workload-cluster-name>-worker-1
+      networkDevice: eth0

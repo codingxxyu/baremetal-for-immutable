@@ -1,0 +1,13 @@
+*.kubeconfig
+workload-kubeconfig
+global-kubeconfig
+*.key
+*.pem
+*.crt
+*.p12
+*.local.yaml
+*.local.json
+installer-config.json
+*.iso
+registration-url.txt
+.DS_Store

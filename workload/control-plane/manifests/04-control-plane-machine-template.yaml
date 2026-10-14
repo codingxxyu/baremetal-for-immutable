@@ -1,0 +1,12 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: BaremetalMachineTemplate
+metadata:
+  name: <workload-cluster-name>-control-plane-template
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: <workload-cluster-name>
+spec:
+  template:
+    spec:
+      machineInventoryPoolRef:
+        name: <workload-cluster-name>-control-plane-pool

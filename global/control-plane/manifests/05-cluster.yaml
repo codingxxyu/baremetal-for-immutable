@@ -1,0 +1,35 @@
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: global
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: global
+    cluster-type: ProviderBaremetal
+    is-global: "true"
+  annotations:
+    capi.cpaas.io/resource-group-version: infrastructure.cluster.x-k8s.io/v1beta1
+    capi.cpaas.io/resource-kind: BaremetalCluster
+    capi.cpaas.io/kubernetes: v1.35.6-acp.1
+    cpaas.io/sentry-deploy-type: Baremetal
+    cpaas.io/alb-address-type: ClusterAddress
+    cpaas.io/kube-ovn-join-cidr: 100.5.0.0/16
+    cpaas.io/kube-ovn-version: v4.4.6
+    cpaas.io/registry-address: <bootstrap-host-ip>:11443
+    cpaas.io/nodes-mode: self-managed
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks:
+        - 100.3.0.0/16
+    services:
+      cidrBlocks:
+        - 100.4.0.0/16
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: BaremetalCluster
+    name: global
+  controlPlaneRef:
+    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    kind: KubeadmControlPlane
+    name: global-kcp

@@ -1,0 +1,20 @@
+# Cluster and BaremetalCluster MUST be named exactly global.
+# Default is External LB. For Internal Alive, set type: Internal and keep vrid.
+# For External, delete the vrid field before apply.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: BaremetalCluster
+metadata:
+  name: global
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: global
+  annotations:
+    cpaas.io/registry-address: <bootstrap-host-ip>:11443
+spec:
+  controlPlaneLoadBalancer:
+    type: External
+    host: <global-control-plane-vip>
+    port: 6443
+    # vrid: <unique-vrid>
+  networkType: kube-ovn
+  networkDevice: eth0

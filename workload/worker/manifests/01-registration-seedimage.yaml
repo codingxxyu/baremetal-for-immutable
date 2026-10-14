@@ -1,0 +1,63 @@
+# Apply on the finished Global. Do not reuse the workload control-plane ISO.
+# ISO: SeedImage status.downloadURL. Registration URL is a credential.
+apiVersion: elemental.cattle.io/v1beta1
+kind: MachineRegistration
+metadata:
+  name: <workload-cluster-name>-worker-registration
+  namespace: cpaas-system
+  labels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    cpaas.io/cluster-name: <workload-cluster-name>
+spec:
+  machineName: "<workload-cluster-name>-worker-${System Information/UUID}"
+  machineInventoryLabels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    pool.baremetal.alauda.io/eligible: "true"
+    elemental.cattle.io/serial-number: "${System Information/Serial Number}"
+    cpaas.io/cluster-name: <workload-cluster-name>
+  machineInventoryAnnotations:
+    elemental.cattle.io/machine-uuid: "${System Information/UUID}"
+  config:
+    elemental:
+      install:
+        device: /dev/elemental-install-target
+        eject-cd: true
+        reboot: true
+        snapshotter:
+          type: btrfs
+          maxSnaps: 4
+      registration:
+        emulate-tpm: true
+        emulated-tpm-seed: -1
+---
+apiVersion: elemental.cattle.io/v1beta1
+kind: SeedImage
+metadata:
+  name: <workload-cluster-name>-worker-registration-iso
+  namespace: cpaas-system
+  labels:
+    app.kubernetes.io/part-of: cluster-api-provider-baremetal
+    cpaas.io/cluster-name: <workload-cluster-name>
+spec:
+  type: iso
+  baseImage: <platform-access-domain-or-vip>:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+  registrationRef:
+    apiVersion: elemental.cattle.io/v1beta1
+    kind: MachineRegistration
+    name: <workload-cluster-name>-worker-registration
+    namespace: cpaas-system
+  targetPlatform: linux/amd64
+  size: 20Gi
+  cleanupAfterMinutes: 120
+  cloud-config:
+    stages:
+      boot:
+        - name: "Size COS_STATE for reprovisioning"
+          files:
+            - path: /etc/elemental/config.d/partitions.yaml
+              permissions: 0644
+              content: |
+                install:
+                  partitions:
+                    state:
+                      size: 20480

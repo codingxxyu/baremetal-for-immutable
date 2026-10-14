@@ -1,0 +1,39 @@
+{
+  "basic": {
+    "username": "admin@cpaas.io",
+    "password": "<base64-platform-admin-password>"
+  },
+  "registry": {
+    "domain": "<platform-access-domain-or-vip>:11443",
+    "username": "<registry-username>",
+    "password": "<base64-registry-password>"
+  },
+  "console": {
+    "host": [
+      "<global-control-plane-vip>"
+    ],
+    "globalHost": "<platform-access-domain-or-vip>",
+    "httpPort": 80,
+    "httpsPort": 443,
+    "cert": {
+      "selfSigned": {}
+    }
+  },
+  "cluster": {
+    "clusterCIDR": "100.3.0.0/16",
+    "serviceCIDR": "100.4.0.0/16",
+    "features": {
+      "ha": {
+        "vip": "<global-control-plane-vip>",
+        "vport": 6443,
+        "isThirdParty": true
+      }
+    }
+  },
+  "product": [
+    "base",
+    "acp"
+  ],
+  "deployMode": "normal",
+  "hostIP": "<bootstrap-host-ip>"
+}

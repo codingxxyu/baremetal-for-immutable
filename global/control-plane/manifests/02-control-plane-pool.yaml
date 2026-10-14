@@ -1,0 +1,26 @@
+# Apply only after three global control-plane hosts have left Live ISO,
+# registered as MachineInventory, and are Ready=True.
+# Inventory names come from elemental-register; replace the placeholders.
+#
+# Official Global Step 4 fragment lists inventory names only
+# (`- global-cp-1`). That is not apply-able. This pool uses the complete
+# Bare Metal create-cluster shape: name + hostname + networkDevice.
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: MachineInventoryPool
+metadata:
+  name: global-control-plane-pool
+  namespace: cpaas-system
+  labels:
+    cpaas.io/cluster-name: global
+spec:
+  clusterName: global
+  machineInventories:
+    - name: <global-machine-inventory-1>
+      hostname: global-cp-1
+      networkDevice: eth0
+    - name: <global-machine-inventory-2>
+      hostname: global-cp-2
+      networkDevice: eth0
+    - name: <global-machine-inventory-3>
+      hostname: global-cp-3
+      networkDevice: eth0

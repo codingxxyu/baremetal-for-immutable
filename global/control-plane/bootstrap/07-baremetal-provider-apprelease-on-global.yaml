@@ -1,0 +1,71 @@
+# Apply on the finished Global AFTER OS images and the Bare Metal provider
+# chart have been pushed to the platform registry. Registration / ISO created
+# after this file use the platform domain, not the bootstrap node.
+#
+# installer console.cert.selfSigned produces dex.tls with tls.crt + tls.key only.
+# elemental-operator fails if caCertSecretKey is still ca.crt:
+#   MountVolume.SetUp failed ... non-existent secret key: ca.crt
+# Confirm keys first:
+#   kubectl -n cpaas-system get secret dex.tls -o jsonpath='{.data}'
+# If the Secret has ca.crt (cert-manager), change the key below back to ca.crt.
+apiVersion: operator.alauda.io/v1alpha1
+kind: AppRelease
+metadata:
+  annotations:
+    auto-recycle: "true"
+    interval-sync: "true"
+  name: cluster-api-provider-baremetal
+  namespace: cpaas-system
+spec:
+  destination:
+    cluster: ""
+    namespace: ""
+  source:
+    charts:
+      - name: ait/chart-cluster-api-provider-baremetal
+        releaseName: cluster-api-provider-baremetal
+        targetRevision: <baremetal-provider-chart-version>
+        repoURL: <platform-access-domain-or-vip>:11443
+    timeout: 120
+    values:
+      global:
+        albName: global-alb2
+        auth:
+          default_admin: admin@cpaas.io
+        cluster:
+          isGlobal: true
+          name: global
+          networkType: kube-ovn
+          type: Baremetal
+        host: <platform-access-domain-or-vip>
+        ingress:
+          ingressClassName: global-alb2
+          tls:
+            secretName: dex.tls
+        labelBaseDomain: cpaas.io
+        namespace: cpaas-system
+        platformUrl: https://<platform-access-domain-or-vip>
+        region: global
+        registry:
+          address: <platform-access-domain-or-vip>:11443
+        replicas: 1
+        scheme: https
+      provider:
+        imageCatalog:
+          images:
+            v1.35.6-acp.1:
+              repository: tkestack/baremetal-base-image
+              tag: <os-image-tag>
+      elemental:
+        server:
+          url: https://<platform-access-domain-or-vip>
+        systemAgent:
+          authMode: shared
+          splitAuthEnabled: false
+          serviceAccountName: baremetal-system-agent
+          globalServiceAccountName: baremetal-global-system-agent
+          sharedAuthReadOnly: false
+        tls:
+          agentTLSMode: strict
+          caCertSecretName: dex.tls
+          caCertSecretKey: tls.crt
