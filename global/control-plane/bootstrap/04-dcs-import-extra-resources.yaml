@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster AFTER global control-plane nodes are Ready
 # and BEFORE POST /cpaas-installer/api/config/dcs.
 # Name keeps the historical dcs- prefix even for Bare Metal.

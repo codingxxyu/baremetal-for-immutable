@@ -1,3 +1,4 @@
+# APPLY-ON: finished Global   kubeconfig: global-kubeconfig
 # Apply on the finished Global cluster after providers and OS catalog are Ready.
 # Do not reuse the Global control-plane ISO. Cluster name must not be "global".
 # ISO: SeedImage status.downloadURL. Registration URL is a credential.

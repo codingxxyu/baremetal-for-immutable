@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster AFTER the Bare Metal provider is Ready
 # and elemental-image-catalog contains v1.35.6-acp.1.
 # This ISO belongs to bootstrap. Do not reuse it after handoff.

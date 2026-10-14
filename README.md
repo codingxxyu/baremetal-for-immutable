@@ -1,6 +1,21 @@
 # ACP 4.4.0 Bare Metal 交付包
 
+```text
+pack:          baremetal-for-immutable 1.1.0   (见 VERSION.yaml)
+ACP:           v4.4.0
+Kubernetes:    v1.35.6-acp.1
+baseline:      非 DR · External LB · ISO 首装 · 首次交付不做 Global Worker
+```
+
 现场按本文一步做。这是 **ACP v4.4.0 全新安装**：先在一台传统 OS 引导节点上起 KIND `minialauda`，再用 ISO 装三台 Global 控制面，installer 交接后，Global 才是管理集群。**不要**把压模 apply 到已经在跑的传统 OS Global 上。
+
+每一份 YAML 第一行是 `APPLY-ON`。apply 前先对 kubeconfig：
+
+| 阶段 | kubeconfig | 目录 |
+|---|---|---|
+| 第一部分 | 引导节点 `~/.kube/config`（minialauda） | `global/control-plane/bootstrap/` `global/control-plane/manifests/` |
+| 第二部分 | `./global-kubeconfig`（成品 Global） | `global/management/` |
+| 第三部分 | 同上，KIND 已拆掉 | `workload/` |
 
 没有渲染器、没有脚本。`config/site.values.local.yaml` 只是备忘，改它不会改 YAML。必须在对应压模里把 `<占位符>` 换成现场值，再 `kubectl apply`。文件里还留着 `<...>` 就不要 apply。
 
@@ -15,8 +30,6 @@
 - OS 矩阵：https://docs.alauda.cn/immutable-infra/1.0/en/overview/os-support-matrix.html
 
 ```text
-ACP:            v4.4.0
-Kubernetes:     v1.35.6-acp.1
 etcd:           v3.6.13-acp.0
 containerd:     2.2.6-3
 coredns:        1.14.3-v4.4.6
@@ -44,22 +57,24 @@ grep -nE '<[^>]+>' 你准备 apply 的那个文件
 ## 目录
 
 ```text
+VERSION.yaml CHANGELOG.md
 config/site.values.example.yaml
-global/control-plane/bootstrap/     # KIND bootstrap + 交接后在 Global 上再装 provider
-global/control-plane/manifests/     # Cluster 名必须是 global
-global/worker/manifests/            # 可选；不要复用控制面 ISO
+global/control-plane/bootstrap/     # 01–05 只在 minialauda
+global/control-plane/manifests/     # Cluster 名必须是 global；只在 minialauda
+global/management/                  # 成品 Global 上装两个 provider
+global/worker/                      # 首次交付跳过，见 SKIP.md
 workload/control-plane/manifests/   # 集群名不能是 global
 workload/worker/manifests/
 ```
 
-| 阶段 | 目录 | 在哪 apply |
+| 阶段 | 目录 | kubeconfig |
 |---|---|---|
-| 引导集群装 provider | `global/control-plane/bootstrap/01`–`03` | bootstrap（minialauda） |
-| Global 控制面注册 / CAPI | `global/control-plane/manifests/` | bootstrap |
-| Global Worker（可选） | `global/worker/manifests/` | bootstrap |
-| 导入 + installer | `global/control-plane/bootstrap/04`–`05` | bootstrap |
-| Global 作为管理集群 | `global/control-plane/bootstrap/06`–`07` | **成品 Global** |
+| 引导集群装 provider | `global/control-plane/bootstrap/01`–`03` | minialauda |
+| Global 控制面注册 / CAPI | `global/control-plane/manifests/` | minialauda |
+| 导入 + installer | `global/control-plane/bootstrap/04`–`05` | minialauda |
+| Global 作为管理集群 | `global/management/` | **成品 Global** |
 | Workload | `workload/` | **成品 Global** |
+| Global Worker | `global/worker/` | 首次交付 **不要 apply** |
 
 ---
 
@@ -75,6 +90,26 @@ workload/worker/manifests/
 8. `dcs-import-extra-resources` 不要导入 Elemental plan Secret、kubeadm bootstrap Secret、KubeadmConfig、SeedImage 对象。
 9. 本包是 ISO 首装路径。HCS qcow2 + `elemental-register --install --no-toolkit` 不是官方 BM Global/Workload 首装。
 10. 不要克隆已注册磁盘当云模板。
+11. `global/management/` 禁止 apply 到 minialauda。`bootstrap/01`–`05` 禁止 apply 到成品 Global。
+12. 首次交付不要 apply `global/worker/`。
+
+---
+
+## 闸门（过了才能进下一步）
+
+不要凭「差不多了」往下走。每行左边是命令，右边是必须看到的结果。
+
+| 过了才能做 | 检查 | 必须 |
+|---|---|---|
+| apply Registration | catalog 有 `v1.35.6-acp.1`；BM provider Ready | 见第 5 步 |
+| 挂 ISO | `SeedImage` Ready 且 `status.downloadURL` 非空 | 第 6 步 |
+| apply Pool / KCP | 三台 Inventory `Ready=True`，已离开 Live | 第 8–9 步 |
+| apply `04` 导入清单 | KCP Ready、三台 Master Node Ready | 第 12 步 |
+| POST installer | `04` 已 apply，inventory 名与 Pool 一致 | 第 13 步 |
+| 推镜像到平台仓库 | installer Success **且** 第 15 步 handoff 三项都过 | 第 15 步 |
+| apply `global/management/` | 平台仓库已有两个 OS 镜像 + 两个 chart | 第 16 步 |
+| 拆 KIND | 第 15 + 16 + 17 都过；`global-kubeconfig` 能 `get nodes` | 第 17 步末 |
+| apply Workload | 成品 catalog 有 `v1.35.6-acp.1`，KIND 已拆或不再使用 | 第 17 步 catalog |
 
 ---
 
@@ -146,12 +181,29 @@ CIDR 默认：Global `100.3/16` `100.4/16` join `100.5/16`；Workload `100.13/16
 
 所有命令默认在 **引导节点** 上，kubeconfig 指向 minialauda，直到交接完成。
 
-## 0. 现场值
+## 0. 现场值与进场检查
 
 ```bash
 cp config/site.values.example.yaml config/site.values.local.yaml
 # 编辑 local 文件，然后用同一组值替换 YAML 里的 <...>
 grep -RInE '<[^>]+>' --include='*.yaml' --include='*.json' .
+```
+
+进场（引导节点，包已放到 `/root`）：
+
+```bash
+hostname -I
+free -h
+df -h / /var /var/lib/containerd /root
+# 磁盘空闲建议：解压目录 ≥100G，/var/cpaas + containerd 还能再放下 OS 归档
+ls -lh /root/installer-core-v4.4.0-hybrid.tar \
+       /root/cluster-api-provider-kubeadm.amd64.*.tgz \
+       /root/cluster-api-provider-baremetal.amd64.*.tgz \
+       /root/*.tar
+# chart 版本从文件名抄进 YAML
+ls /root/cluster-api-provider-*.tgz
+# 三台 Global 控制面 BMC 能挂 ISO；VIP:6443 转发规则已建（后端可以还没有）
+# 物理机 CPU 是 x86-64-v2（引导节点本身不要求）
 ```
 
 SSH 公钥（KCP `boot` 用户，不能空）：
@@ -469,11 +521,9 @@ kubectl -n cpaas-system get machineinventories.elemental.cattle.io -o wide
 
 `04-dcs-import-extra-resources.yaml` **先不要填、先不要 apply**。等第 12 步 KCP Ready 之后，从 BaremetalMachine 再抄一遍 inventory 名（和 Pool 必须一致），那时再 apply 04。
 
-## 10. 可选：Global Worker — 首次交付请跳过
+## 10. Global Worker — 首次交付跳过
 
-`global/worker/` 只在「Global 必须带独立 Worker、而且要在 installer 之前注册进 bootstrap」时用。多数现场 **三台控制面即可**，Worker 放到第三部分、在成品 Global 上再做。
-
-若坚持在 bootstrap 阶段加 Global Worker：用 **另一张** ISO（`global/worker/manifests/01-registration-seedimage.yaml`），走第 7–9 步，并把 Worker inventory / `global-worker-registration` 补进 `04-dcs-import-extra-resources.yaml`。交接之后这张 ISO 作废，新 Worker 必须在成品 Global 上重新 Registration。
+读 `global/worker/SKIP.md`。本步 **不要 apply**。三台控制面即可。以后要加 Global Worker，在成品 Global 上按第三部分 Worker 的流程另起 Registration，不要用 bootstrap ISO。
 
 ## 11. Control Plane Pool → Template → BaremetalCluster → Cluster → KCP
 
@@ -539,14 +589,7 @@ kubectl apply -f global/control-plane/manifests/05-cluster.yaml
 kubectl apply -f global/control-plane/manifests/06-control-plane.yaml
 ```
 
-有 Global Worker 且控制面已 Ready 时：
-
-```bash
-kubectl apply -f global/worker/manifests/02-worker-pool.yaml
-kubectl apply -f global/worker/manifests/03-worker-machine-template.yaml
-kubectl apply -f global/worker/manifests/04-worker-kubeadm-config-template.yaml
-kubectl apply -f global/worker/manifests/05-worker-machine-deployment.yaml
-```
+首次交付不要 apply `global/worker/`。
 
 ## 12. 等待 Global 控制面 Ready
 
@@ -696,7 +739,7 @@ $PACKTOOL pack push \
   -c /root/cluster-api-provider-baremetal.amd64.<baremetal-provider-chart-version>.tgz
 ```
 
-若 `packtool pack push -h` 没有 `-u`，先看 help 里的 registry 认证参数（有的版本是 `--username` / `--password`）。推完再 apply `06`/`07`，不要空仓 apply。
+若 `packtool pack push -h` 没有 `-u`，先看 help 里的 registry 认证参数（有的版本是 `--username` / `--password`）。推完再 apply `global/management/`，不要空仓 apply。
 
 引导节点要能解析并访问 `${GLOBAL_REGISTRY_ADDRESS}`（HTTPS 11443）。`ctr --skip-verify` 只跳过证书校验，DNS/路由不通仍然会失败。
 
@@ -704,28 +747,28 @@ $PACKTOOL pack push \
 
 ## 17. 在 Global 上安装两个 provider
 
-先看成品 `dex.tls` 实际有哪些 key。installer `console.cert.selfSigned` 通常只有 `tls.crt,tls.key`，**没有 `ca.crt`**。压模 `07` 已把 `caCertSecretKey` 写成 `tls.crt`。若现场 Secret 有 `ca.crt`，把 07 改回 `ca.crt`。
+先看成品 `dex.tls` 实际有哪些 key。installer `console.cert.selfSigned` 通常只有 `tls.crt,tls.key`，**没有 `ca.crt`**。压模 `global/management/02` 已把 `caCertSecretKey` 写成 `tls.crt`。若现场 Secret 有 `ca.crt`，把该文件改回 `ca.crt`。
 
 ```bash
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
   get secret dex.tls -o jsonpath='{.data}' | jq -r 'keys | join(",")'
 ```
 
-文件：
+文件（**成品 Global**，不要 apply 到 minialauda）：
 
-- `global/control-plane/bootstrap/06-kubeadm-provider-apprelease-on-global.yaml`
-- `global/control-plane/bootstrap/07-baremetal-provider-apprelease-on-global.yaml`
+- `global/management/01-kubeadm-provider-apprelease.yaml`
+- `global/management/02-baremetal-provider-apprelease.yaml`
 
 改 chart 版本、`<platform-access-domain-or-vip>`、`<os-image-tag>`。`repoURL` 是平台仓库，不是 `172.18.0.1`。
 
 ```bash
-kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" apply -f global/control-plane/bootstrap/06-kubeadm-provider-apprelease-on-global.yaml
-kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" apply -f global/control-plane/bootstrap/07-baremetal-provider-apprelease-on-global.yaml
+kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" apply -f global/management/01-kubeadm-provider-apprelease.yaml
+kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" apply -f global/management/02-baremetal-provider-apprelease.yaml
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system get deploy \
   cluster-api-provider-baremetal-manager elemental-operator
 ```
 
-chart 在 Global 上建的 catalog **是空的**，不会继承引导集群那条。07 的 `provider.imageCatalog.images` 一般会写入；仍空就 **merge patch**，不要 replace 整个 ConfigMap：
+chart 在 Global 上建的 catalog **是空的**，不会继承引导集群那条。`management/02` 的 `provider.imageCatalog.images` 一般会写入；仍空就 **merge patch**，不要 replace 整个 ConfigMap：
 
 ```bash
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
@@ -868,7 +911,7 @@ catalog 没有 `v1.35.6-acp.1`，或 tag 和 OCI 归档不一致。补 catalog �
 
 ## elemental-operator 起不来（成品 Global）
 
-日志：`references non-existent secret key: ca.crt`。installer 签发的 `dex.tls` 没有 `ca.crt`。`07` 已用 `tls.crt`；若你改回 `ca.crt` 就会再现。
+日志：`references non-existent secret key: ca.crt`。installer 签发的 `dex.tls` 没有 `ca.crt`。`global/management/02` 已用 `tls.crt`；若你改回 `ca.crt` 就会再现。
 
 ## installer POST 连不上
 
@@ -944,12 +987,12 @@ Live ISO 安装会按 `install.device` 重分区。确认软链指向的就是�
 | `global/control-plane/bootstrap/04-dcs-import-extra-resources.yaml` | 与 Pool 相同的 inventory 名；KCP Ready 后再填再 apply |
 | `global/control-plane/bootstrap/05-installer-config-baremetal.json` | 密码（base64）、仓库、VIP、hostIP。副本存成 `installer-config.json` 再 POST |
 
-**成品 Global**
+**成品 Global（`APPLY-ON: finished Global`）**
 
 | 文件 | 必改 |
 |---|---|
-| `global/control-plane/bootstrap/06-kubeadm-provider-apprelease-on-global.yaml` | chart 版本、platform host |
-| `global/control-plane/bootstrap/07-baremetal-provider-apprelease-on-global.yaml` | chart 版本、platform host、OS tag；按 `dex.tls` 实际 key 核对 `caCertSecretKey` |
+| `global/management/01-kubeadm-provider-apprelease.yaml` | chart 版本、platform host |
+| `global/management/02-baremetal-provider-apprelease.yaml` | chart 版本、platform host、OS tag；按 `dex.tls` 实际 key 核对 `caCertSecretKey` |
 
 **Workload**
 

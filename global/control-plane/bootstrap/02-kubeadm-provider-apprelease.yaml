@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster after packtool has pushed the Kubeadm provider chart.
 # Chart-internal global.cluster.type must stay Baremetal for every IaaS, including Bare Metal.
 apiVersion: operator.alauda.io/v1alpha1

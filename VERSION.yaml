@@ -1,0 +1,18 @@
+# Delivery-pack identity. Not rendered. Do not confuse with ACP / Kubernetes versions.
+pack: baremetal-for-immutable
+pack_version: "1.1.0"
+released: "2026-10-15"
+acp_version: v4.4.0
+kubernetes_version: v1.35.6-acp.1
+etcd_image_tag: v3.6.13-acp.0
+coredns_image_tag: 1.14.3-v4.4.6
+kube_ovn_chart: v4.4.6
+namespace: cpaas-system
+baseline:
+  dr: false
+  install: iso-first
+  load_balancer: External
+  global_workers_on_bootstrap: skip
+# Official Global Step 4 YAML is a fragment. Manifests in this pack are the
+# complete Bare Metal create-cluster objects.
+official_step4: fragment-not-applyable

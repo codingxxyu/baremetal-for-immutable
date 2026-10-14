@@ -1,3 +1,4 @@
+# APPLY-ON: finished Global   kubeconfig: global-kubeconfig
 # ACP 4.4.0 Bare Metal KubeadmControlPlane for a workload cluster.
 # Apply on the finished Global. Cluster name must not be "global".
 # Bare Metal cannot over-provision control-plane machines: maxSurge must stay 0.

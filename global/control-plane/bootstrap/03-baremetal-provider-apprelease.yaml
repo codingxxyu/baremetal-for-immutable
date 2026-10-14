@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster after:
 #   1. Bare Metal OS images are in the bootstrap registry
 #   2. 01-dex-tls-bootstrap.yaml is Ready

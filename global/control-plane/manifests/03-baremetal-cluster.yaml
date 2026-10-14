@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Cluster and BaremetalCluster MUST be named exactly global.
 # Default is External LB. For Internal Alive, set type: Internal and keep vrid.
 # For External, delete the vrid field before apply.

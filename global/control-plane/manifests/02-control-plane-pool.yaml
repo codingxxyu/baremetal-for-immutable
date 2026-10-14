@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Apply only after three global control-plane hosts have left Live ISO,
 # registered as MachineInventory, and are Ready=True.
 # Inventory names come from elemental-register; replace the placeholders.

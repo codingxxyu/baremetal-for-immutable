@@ -1,3 +1,4 @@
+# APPLY-ON: finished Global   kubeconfig: global-kubeconfig
 # Apply on the finished Global. Do not reuse the workload control-plane ISO.
 # ISO: SeedImage status.downloadURL. Registration URL is a credential.
 apiVersion: elemental.cattle.io/v1beta1

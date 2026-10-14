@@ -1,4 +1,4 @@
-# Site values for this delivery. Copy to site.values.local.yaml (gitignored).
+# Pack 1.1.0 / ACP v4.4.0. Copy to site.values.local.yaml (gitignored).
 # There is no renderer. Editing this file does nothing to the manifests.
 # Search-replace the same <placeholder> strings in the YAML/JSON this file
 # names, then kubectl apply. Do not commit passwords, kubeconfigs, ISOs, or

@@ -1,3 +1,4 @@
+# APPLY-ON: finished Global   kubeconfig: global-kubeconfig
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:

@@ -1,5 +1,6 @@
-# Apply on the finished Global AFTER handoff, using the platform domain registry.
-# Chart-internal global.cluster.type stays Baremetal for every IaaS.
+# APPLY-ON: finished Global   kubeconfig: global-kubeconfig
+# Do NOT apply on minialauda. Chart-internal global.cluster.type stays Baremetal.
+# Apply AFTER OS images and this chart have been pushed to the platform registry.
 apiVersion: operator.alauda.io/v1alpha1
 kind: AppRelease
 metadata:

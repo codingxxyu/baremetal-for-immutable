@@ -1,3 +1,4 @@
+# APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster BEFORE the Bare Metal provider AppRelease.
 # elemental-operator mounts CA from cpaas-system/dex.tls (tls.crt, tls.key, ca.crt).
 # Serving cert must include <bootstrap-host-ip> as an IP SAN for https://<bootstrap-host-ip>:12443.
