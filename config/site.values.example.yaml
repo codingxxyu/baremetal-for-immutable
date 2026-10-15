@@ -1,13 +1,17 @@
-# Pack 1.1.0 / ACP v4.4.0. Copy to site.values.local.yaml (gitignored).
+# Pack 1.4.0 / ACP v4.4.1. Copy to site.values.local.yaml (gitignored).
 # There is no renderer. Editing this file does nothing to the manifests.
 # Search-replace the same <placeholder> strings in the YAML/JSON this file
 # names, then kubectl apply. Do not commit passwords, kubeconfigs, ISOs, or
 # registration URLs.
 #
-# Official matrix for ACP v4.4.0:
+# Official OS matrix currently lists v4.4.0 only; 4.4.1 is a patch and
+# reuses that component row:
 #   https://docs.alauda.cn/immutable-infra/1.0/en/overview/os-support-matrix.html
+#
+# First delivery does NOT register Global workers. Do not fill a
+# global.worker_* block — see global/worker/SKIP.md.
 
-acp_version: v4.4.0
+acp_version: v4.4.1
 kubernetes_version: v1.35.6-acp.1
 containerd: 2.2.6-3
 coredns_image_tag: 1.14.3-v4.4.6
@@ -21,8 +25,8 @@ namespace: cpaas-system
 # Fill after: ctr -n bare-metal-os images ls -q
 os_image_tag: <os-image-tag>
 
-# Customer Portal packages. Chart versions must come from the same ACP 4.4.0 payload.
-core_package: installer-core-v4.4.0-hybrid.tar
+# Customer Portal packages. Chart versions must come from the same ACP 4.4.1 payload.
+core_package: installer-core-v4.4.1-hybrid.tar
 kubeadm_provider_pack: cluster-api-provider-kubeadm.amd64.<kubeadm-provider-chart-version>.tgz
 baremetal_provider_pack: cluster-api-provider-baremetal.amd64.<baremetal-provider-chart-version>.tgz
 kubeadm_provider_chart_version: <kubeadm-provider-chart-version>
@@ -30,17 +34,23 @@ baremetal_provider_chart_version: <baremetal-provider-chart-version>
 bare_metal_os_archive: <bare-metal-os-archive>.tar
 
 bootstrap:
-  host_ip: <bootstrap-host-ip>
+  # Site bootstrap node (traditional OS + KIND minialauda). Not the Global VIP.
+  host_ip: 156.3.1.26
   local_registry: 127.0.0.1:11443          # packtool / ctr push from the bootstrap node
   bootstrap_registry: 172.18.0.1:11443     # AppRelease repoURL (Pods inside KIND)
-  node_registry: <bootstrap-host-ip>:11443 # Cluster cpaas.io/registry-address until installer rewrites it
-  elemental_server: https://<bootstrap-host-ip>:12443
+  # Cluster annotation on first apply. Installer rewrites Cluster (not
+  # BaremetalCluster) to platform.registry_domain. Do not put the API VIP here.
+  node_registry: 156.3.1.26:11443
+  elemental_server: https://156.3.1.26:12443
   installer_core_extract: /root/cpaas-install
   packtool: /root/cpaas-install/installer/res/amd64/packtool
 
 platform:
+  # Console / elemental after handoff. May equal control_plane_vip, or a FQDN.
   host: <platform-access-domain-or-vip>
+  # Permanent cpaas.io/registry-address after installer. host:11443, not :6443.
   registry_domain: <platform-access-domain-or-vip>:11443
+  # API VIP (TCP 6443). Not the registry. BaremetalCluster.spec.controlPlaneLoadBalancer.host.
   control_plane_vip: <global-control-plane-vip>
   control_plane_port: 6443
   load_balancer_type: External   # or Internal
@@ -49,9 +59,9 @@ platform:
   ingress_class: global-alb2
 
 network:
-  cluster_cidr: 100.3.0.0/16
-  service_cidr: 100.4.0.0/16
-  kube_ovn_join_cidr: 100.5.0.0/16
+  cluster_cidr: 10.3.0.0/16
+  service_cidr: 10.4.0.0/16          # not 10.4.0.0/14 — that covers 10.5/10.6
+  kube_ovn_join_cidr: 100.64.0.0/16
 
 ssh:
   authorized_key: <ssh-authorized-keys>
@@ -65,7 +75,7 @@ install:
 global:
   cluster_name: global           # required literal. Do not change.
   control_plane_replicas: 3
-  worker_replicas: 1
+  # First delivery: skip Global workers (no worker_replicas / worker_inventories).
   control_plane_inventories:
     - name: <global-machine-inventory-1>
       hostname: global-cp-1
@@ -75,10 +85,6 @@ global:
       network_device: eth0
     - name: <global-machine-inventory-3>
       hostname: global-cp-3
-      network_device: eth0
-  worker_inventories:
-    - name: <global-worker-inventory-1>
-      hostname: global-worker-1
       network_device: eth0
 
 workload:
@@ -90,9 +96,9 @@ workload:
   control_plane_port: 6443
   vrid: "<workload-vrid>"
   network_device: eth0
-  cluster_cidr: 100.13.0.0/16
-  service_cidr: 100.14.0.0/16
-  kube_ovn_join_cidr: 100.15.0.0/16
+  cluster_cidr: 10.5.0.0/16
+  service_cidr: 10.6.0.0/16
+  kube_ovn_join_cidr: 100.65.0.0/16
   control_plane_inventories:
     - name: <workload-cp-inventory-1>
       hostname: <workload-cluster-name>-cp-1

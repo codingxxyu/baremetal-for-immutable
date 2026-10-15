@@ -1,4 +1,11 @@
-# APPLY-ON: bootstrap (minialauda)
+# APPLY-ON: bootstrap (minialauda)  — first create only
+# cpaas.io/registry-address here is the bootstrap node (156.3.1.26:11443) so
+# Global hosts can pull images before the platform registry exists.
+# Official installer rewrites THIS Cluster annotation to
+#   <platform-access-domain-or-vip>:11443
+# after the Global registry is up. Do NOT kubectl apply this file again after
+# installer — that restores the bootstrap IP and nodes pull a dead KIND registry.
+# BaremetalCluster is a different object; see 03-baremetal-cluster.yaml.
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
@@ -14,18 +21,18 @@ metadata:
     capi.cpaas.io/kubernetes: v1.35.6-acp.1
     cpaas.io/sentry-deploy-type: Baremetal
     cpaas.io/alb-address-type: ClusterAddress
-    cpaas.io/kube-ovn-join-cidr: 100.5.0.0/16
+    cpaas.io/kube-ovn-join-cidr: 100.64.0.0/16
     cpaas.io/kube-ovn-version: v4.4.6
-    cpaas.io/registry-address: <bootstrap-host-ip>:11443
+    cpaas.io/registry-address: 156.3.1.26:11443
     cpaas.io/nodes-mode: self-managed
 spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-        - 100.3.0.0/16
+        - 10.3.0.0/16
     services:
       cidrBlocks:
-        - 100.4.0.0/16
+        - 10.4.0.0/16
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: BaremetalCluster

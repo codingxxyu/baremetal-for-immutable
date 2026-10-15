@@ -7,6 +7,7 @@
 # Non-DR baseline. Do not set baremetal.cluster.io/system-agent-server-url
 # on the bootstrap MachineRegistration.
 # platformUrl and elemental.server.url stay on the bootstrap node until handoff.
+# After handoff, apply ../../management/02 instead (platform host, no :12443).
 apiVersion: operator.alauda.io/v1alpha1
 kind: AppRelease
 metadata:
@@ -43,7 +44,7 @@ spec:
             secretName: dex.tls
         labelBaseDomain: cpaas.io
         namespace: cpaas-system
-        platformUrl: https://<bootstrap-host-ip>
+        platformUrl: https://156.3.1.26
         region: global
         registry:
           address: 172.18.0.1:11443
@@ -63,7 +64,7 @@ spec:
             mode: always
       elemental:
         server:
-          url: https://<bootstrap-host-ip>:12443
+          url: https://156.3.1.26:12443
         systemAgent:
           authMode: shared
           splitAuthEnabled: false

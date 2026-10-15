@@ -1,4 +1,5 @@
-# APPLY-ON: bootstrap (minialauda) — FIRST DELIVERY: skip. See SKIP.md.
+# DO-NOT-APPLY on first delivery. See ../SKIP.md.
+# APPLY-ON: bootstrap (minialauda) — only if a later CR forces bootstrap-phase Global workers.
 # Do not pre-fill hostname, provider-id, or criSocket.
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate

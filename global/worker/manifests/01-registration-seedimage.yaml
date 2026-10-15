@@ -1,7 +1,9 @@
-# APPLY-ON: bootstrap (minialauda) — FIRST DELIVERY: skip. See SKIP.md.
+# DO-NOT-APPLY on first delivery. See ../SKIP.md.
+# APPLY-ON: bootstrap (minialauda) — only if a later CR forces bootstrap-phase Global workers.
 # Optional Global workers.
 # First delivery: skip this directory. Install three control-plane hosts only.
-# ISO: SeedImage status.downloadURL. Do not reuse the control-plane ISO.
+# Gate: status.downloadURL. spec.size 20Gi needs default StorageClass.
+# Do not reuse the control-plane ISO.
 # Apply on bootstrap only if those workers must exist before installer/handoff;
 # then add their inventory names and this Registration to 04-dcs-import-extra-resources.yaml.
 # After handoff, do not use this bootstrap ISO. Change baseImage to

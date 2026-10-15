@@ -1,11 +1,13 @@
 # Delivery-pack identity. Not rendered. Do not confuse with ACP / Kubernetes versions.
 pack: baremetal-for-immutable
-pack_version: "1.1.0"
-released: "2026-10-15"
-acp_version: v4.4.0
+pack_version: "1.4.0"
+released: "2026-10-16"
+acp_version: v4.4.1
 kubernetes_version: v1.35.6-acp.1
 etcd_image_tag: v3.6.13-acp.0
 coredns_image_tag: 1.14.3-v4.4.6
+containerd: 2.2.6-3
+pause: "3.10"
 kube_ovn_chart: v4.4.6
 namespace: cpaas-system
 baseline:
@@ -16,3 +18,21 @@ baseline:
 # Official Global Step 4 YAML is a fragment. Manifests in this pack are the
 # complete Bare Metal create-cluster objects.
 official_step4: fragment-not-applyable
+# Official OS matrix currently has a v4.4.0 row and no v4.4.1 row.
+# ACP 4.4.1 (issued 2026-10-01) is a patch; baked-in component versions
+# stay the v4.4.0 row until the matrix publishes a 4.4.1 line.
+#   https://docs.alauda.cn/immutable-infra/1.0/en/overview/os-support-matrix.html
+#   https://docs.alauda.io/container_platform/4.4/overview/release_notes.html
+# installer rewrites Cluster (and DCSCluster) cpaas.io/registry-address to
+# the platform registry. BaremetalCluster is NOT in that rewrite set.
+registry_address:
+  bootstrap_global_cluster: bootstrap-host-ip:11443
+  after_installer_cluster: platform-access-domain-or-vip:11443
+  after_installer_baremetalcluster: patch-if-still-bootstrap
+  workload: platform-access-domain-or-vip:11443
+gates:
+  seedimage: status.downloadURL-nonempty
+  installer_json: POST-on-bootstrap-node-to-installer-pod-ip-8080
+  packtool_auth: read-pack-push-help-first
+  seedimage_pvc: default-StorageClass-20Gi
+  registry_rewrite: cluster-annotation-is-platform-not-bootstrap

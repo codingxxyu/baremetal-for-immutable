@@ -7,8 +7,9 @@
 #   kubectl -n cpaas-system get baremetalmachine -l cluster.x-k8s.io/cluster-name=global \
 #     -o custom-columns='NAME:.metadata.name,INVENTORY:.status.machineInventoryRef.name'
 # Names must match the pool object entries (name:), not the official Step 4
-# fragment's bare name list. If you also created Global workers on bootstrap,
-# add those inventory names and global-worker-registration here.
+# fragment's bare name list. First delivery: three control-plane inventories
+# + global-registration only. Bootstrap-phase Global workers (later CR only):
+# add those inventory names and global-worker-registration here before POST.
 #
 # Do not import SeedImage objects, MachineRegistration token Secrets,
 # Elemental plan Secrets, KubeadmConfig, or kubeadm bootstrap data Secrets.

@@ -1,5 +1,5 @@
 # APPLY-ON: bootstrap (minialauda)
-# ACP 4.4.0 Bare Metal KubeadmControlPlane for the global cluster.
+# ACP 4.4.1 Bare Metal KubeadmControlPlane for the global cluster.
 # Replace sshAuthorizedKeys, VIP, and platform host before apply.
 # Bare Metal cannot over-provision control-plane machines: maxSurge must stay 0.
 # Official Global Step 4 fragment omits files/users/clusterConfiguration body and

@@ -1,7 +1,14 @@
-# APPLY-ON: bootstrap (minialauda)
+# APPLY-ON: bootstrap (minialauda)  — first create only
 # Cluster and BaremetalCluster MUST be named exactly global.
 # Default is External LB. For Internal Alive, set type: Internal and keep vrid.
 # For External, delete the vrid field before apply.
+#
+# cpaas.io/registry-address starts as 156.3.1.26:11443 (bootstrap). Official
+# installer rewrites Cluster / DCSCluster only — NOT BaremetalCluster.
+# After installer Success, if this annotation is still the bootstrap IP, patch
+# it to <platform-access-domain-or-vip>:11443. Do NOT re-apply this file after
+# installer (it would restore the bootstrap IP and the External host placeholder).
+# spec.controlPlaneLoadBalancer.host is the API VIP (TCP 6443), not the registry.
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: BaremetalCluster
 metadata:
@@ -10,7 +17,7 @@ metadata:
   labels:
     cpaas.io/cluster-name: global
   annotations:
-    cpaas.io/registry-address: <bootstrap-host-ip>:11443
+    cpaas.io/registry-address: 156.3.1.26:11443
 spec:
   controlPlaneLoadBalancer:
     type: External

@@ -1,4 +1,5 @@
-# APPLY-ON: bootstrap (minialauda) — FIRST DELIVERY: skip. See SKIP.md.
+# DO-NOT-APPLY on first delivery. See ../SKIP.md.
+# APPLY-ON: bootstrap (minialauda) — only if a later CR forces bootstrap-phase Global workers.
 # Apply after global worker hosts have left Live ISO and are Ready=True.
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: MachineInventoryPool

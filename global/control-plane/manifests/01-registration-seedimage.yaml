@@ -4,9 +4,9 @@
 # This ISO belongs to bootstrap. Do not reuse it after handoff.
 # Worker hosts use global/worker/manifests/01-registration-seedimage.yaml.
 #
-# After Ready: SeedImage status.downloadURL is the ISO; status.downloadToken
-# identifies the download. MachineRegistration status.registrationURL is a
-# credential — read it on the bootstrap node, do not commit it.
+# Gate is status.downloadURL non-empty (condition type is Ready or SeedImageReady).
+# spec.size 20Gi needs a default StorageClass on minialauda. PVC Pending = ISO never builds.
+# MachineRegistration status.registrationURL is a credential — do not commit it.
 # Official Global Step 4 YAML is a fragment. This file is the complete
 # Registration + SeedImage shape (create-cluster reference), not that fragment.
 apiVersion: elemental.cattle.io/v1beta1

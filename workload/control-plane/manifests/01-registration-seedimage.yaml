@@ -1,7 +1,7 @@
 # APPLY-ON: finished Global   kubeconfig: global-kubeconfig
 # Apply on the finished Global cluster after providers and OS catalog are Ready.
 # Do not reuse the Global control-plane ISO. Cluster name must not be "global".
-# ISO: SeedImage status.downloadURL. Registration URL is a credential.
+# Gate: status.downloadURL non-empty. spec.size 20Gi needs default StorageClass on Global.
 apiVersion: elemental.cattle.io/v1beta1
 kind: MachineRegistration
 metadata:

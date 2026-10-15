@@ -1,7 +1,7 @@
 # APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster BEFORE the Bare Metal provider AppRelease.
 # elemental-operator mounts CA from cpaas-system/dex.tls (tls.crt, tls.key, ca.crt).
-# Serving cert must include <bootstrap-host-ip> as an IP SAN for https://<bootstrap-host-ip>:12443.
+# Serving cert must include 156.3.1.26 as an IP SAN for https://156.3.1.26:12443.
 # Do not import this Secret into the final global cluster.
 apiVersion: cert-manager.io/v1
 kind: Issuer
@@ -48,7 +48,7 @@ metadata:
   namespace: cpaas-system
 spec:
   secretName: dex.tls
-  commonName: <bootstrap-host-ip>
+  commonName: 156.3.1.26
   duration: 87600h
   renewBefore: 720h
   privateKey:
@@ -59,7 +59,7 @@ spec:
     - key encipherment
     - server auth
   ipAddresses:
-    - "<bootstrap-host-ip>"
+    - "156.3.1.26"
     - "127.0.0.1"
   dnsNames:
     - global-alb2

@@ -20,8 +20,8 @@
     }
   },
   "cluster": {
-    "clusterCIDR": "100.3.0.0/16",
-    "serviceCIDR": "100.4.0.0/16",
+    "clusterCIDR": "10.3.0.0/16",
+    "serviceCIDR": "10.4.0.0/16",
     "features": {
       "ha": {
         "vip": "<global-control-plane-vip>",
@@ -35,5 +35,5 @@
     "acp"
   ],
   "deployMode": "normal",
-  "hostIP": "<bootstrap-host-ip>"
+  "hostIP": "156.3.1.26"
 }
