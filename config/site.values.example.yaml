@@ -38,20 +38,23 @@ bootstrap:
   host_ip: 156.3.1.26
   local_registry: 127.0.0.1:11443          # packtool / ctr push from the bootstrap node
   bootstrap_registry: 172.18.0.1:11443     # AppRelease repoURL (Pods inside KIND)
-  # Cluster annotation on first apply. Installer rewrites Cluster (not
-  # BaremetalCluster) to platform.registry_domain. Do not put the API VIP here.
+  # Cluster annotation. This site PLATFORM_HOST = HOST_IP, so installer
+  # rewrite of Cluster is a no-op. Do not put the API VIP here.
   node_registry: 156.3.1.26:11443
   elemental_server: https://156.3.1.26:12443
-  installer_core_extract: /root/cpaas-install
-  packtool: /root/cpaas-install/installer/res/amd64/packtool
+  # This site already extracted Core Package so the installer tree is /root/installer
+  # (official example uses /root/cpaas-install). KIND binaries live next to packtool.
+  installer_core_extract: /root
+  installer_dir: /root/installer
+  packtool: /root/installer/res/amd64/packtool
 
 platform:
-  # Console / elemental after handoff. May equal control_plane_vip, or a FQDN.
-  host: <platform-access-domain-or-vip>
+  # Console / elemental after handoff. This site = HOST_IP, not the API VIP.
+  host: 156.3.1.26
   # Permanent cpaas.io/registry-address after installer. host:11443, not :6443.
-  registry_domain: <platform-access-domain-or-vip>:11443
+  registry_domain: 156.3.1.26:11443
   # API VIP (TCP 6443). Not the registry. BaremetalCluster.spec.controlPlaneLoadBalancer.host.
-  control_plane_vip: <global-control-plane-vip>
+  control_plane_vip: 156.3.1.50
   control_plane_port: 6443
   load_balancer_type: External   # or Internal
   vrid: "<unique-vrid>"          # Internal only; delete the field for External
@@ -92,7 +95,7 @@ workload:
   control_plane_replicas: 3
   worker_replicas: 1
   load_balancer_type: External
-  control_plane_vip: <workload-control-plane-vip>
+  control_plane_vip: 156.3.1.95
   control_plane_port: 6443
   vrid: "<workload-vrid>"
   network_device: eth0

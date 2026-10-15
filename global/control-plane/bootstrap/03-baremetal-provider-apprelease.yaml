@@ -37,7 +37,7 @@ spec:
           name: global
           networkType: kube-ovn
           type: Baremetal
-        host: <platform-access-domain-or-vip>
+        host: 156.3.1.26
         ingress:
           ingressClassName: global-alb2
           tls:
@@ -58,7 +58,7 @@ spec:
               tag: <os-image-tag>
         handoffHook:
           directAPIServer: false
-          controlPlaneVIP: <global-control-plane-vip>
+          controlPlaneVIP: 156.3.1.50
           delivery:
             enabled: true
             mode: always

@@ -15,5 +15,6 @@ Do **not** apply this directory onto the finished Global.
 Finished-Global providers live in `../../management/`, not here.
 
 After installer Success, **do not** re-apply `../manifests/03` or `../manifests/05`.
-Those files still say `156.3.1.26:11443`. Official rewrite is Cluster only;
-patch BaremetalCluster if it still points at the bootstrap node.
+On this site those files already say `156.3.1.26:11443` (`PLATFORM_HOST` =
+`HOST_IP`). Official rewrite of Cluster is a no-op on the host string.
+Patch BaremetalCluster only if it shows `127.0.0.1` or `172.18.0.1`.

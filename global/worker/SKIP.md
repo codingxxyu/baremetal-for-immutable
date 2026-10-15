@@ -14,7 +14,7 @@ After `global/management/` is Ready, add Global workers from `post-global/`
    (`global-kubeconfig`). `baseImage` is the platform registry.
 2. Never reuse the control-plane ISO or `manifests/01` (`172.18.0.1:11443`).
 3. Confirm Cluster / BaremetalCluster `cpaas.io/registry-address` is already
-   `<platform-access-domain-or-vip>:11443` before building the worker ISO.
+   `156.3.1.26:11443` before building the worker ISO.
 
 `manifests/` is the bootstrap-phase copy. Keep it `DO-NOT-APPLY` unless a later
 change-request forces workers **before** POST installer; then extend the import

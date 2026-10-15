@@ -7,7 +7,7 @@
 # Apply on bootstrap only if those workers must exist before installer/handoff;
 # then add their inventory names and this Registration to 04-dcs-import-extra-resources.yaml.
 # After handoff, do not use this bootstrap ISO. Change baseImage to
-#   <platform-access-domain-or-vip>:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+#   156.3.1.26:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
 # and apply on the finished Global instead.
 # Do not reuse the control-plane ISO.
 apiVersion: elemental.cattle.io/v1beta1

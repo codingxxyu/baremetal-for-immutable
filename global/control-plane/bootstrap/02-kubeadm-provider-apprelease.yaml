@@ -30,12 +30,12 @@ spec:
           name: global
           networkType: kube-ovn
           type: Baremetal
-        host: <platform-access-domain-or-vip>
+        host: 156.3.1.26
         ingress:
           ingressClassName: global-alb2
         labelBaseDomain: cpaas.io
         namespace: cpaas-system
-        platformUrl: https://<platform-access-domain-or-vip>
+        platformUrl: https://156.3.1.26
         region: global
         registry:
           address: 172.18.0.1:11443

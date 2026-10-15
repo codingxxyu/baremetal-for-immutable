@@ -3,12 +3,12 @@
 # Default is External LB. For Internal Alive, set type: Internal and keep vrid.
 # For External, delete the vrid field before apply.
 #
-# cpaas.io/registry-address starts as 156.3.1.26:11443 (bootstrap). Official
+# cpaas.io/registry-address is 156.3.1.26:11443 (HOST_IP:11443). Official
 # installer rewrites Cluster / DCSCluster only — NOT BaremetalCluster.
-# After installer Success, if this annotation is still the bootstrap IP, patch
-# it to <platform-access-domain-or-vip>:11443. Do NOT re-apply this file after
-# installer (it would restore the bootstrap IP and the External host placeholder).
-# spec.controlPlaneLoadBalancer.host is the API VIP (TCP 6443), not the registry.
+# On this site PLATFORM_HOST equals HOST_IP, so leaving this annotation as-is
+# is correct. Patch only if it ever shows 127.0.0.1 or 172.18.0.1.
+# Do NOT re-apply this file after installer (a re-apply can wipe a live LB host).
+# spec.controlPlaneLoadBalancer.host is the API VIP 156.3.1.50 (TCP 6443), not the registry.
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: BaremetalCluster
 metadata:
@@ -21,7 +21,7 @@ metadata:
 spec:
   controlPlaneLoadBalancer:
     type: External
-    host: <global-control-plane-vip>
+    host: 156.3.1.50
     port: 6443
     # vrid: <unique-vrid>
   networkType: kube-ovn

@@ -26,7 +26,7 @@ spec:
       - name: ait/chart-cluster-api-provider-baremetal
         releaseName: cluster-api-provider-baremetal
         targetRevision: <baremetal-provider-chart-version>
-        repoURL: <platform-access-domain-or-vip>:11443
+        repoURL: 156.3.1.26:11443
     timeout: 120
     values:
       global:
@@ -38,17 +38,17 @@ spec:
           name: global
           networkType: kube-ovn
           type: Baremetal
-        host: <platform-access-domain-or-vip>
+        host: 156.3.1.26
         ingress:
           ingressClassName: global-alb2
           tls:
             secretName: dex.tls
         labelBaseDomain: cpaas.io
         namespace: cpaas-system
-        platformUrl: https://<platform-access-domain-or-vip>
+        platformUrl: https://156.3.1.26
         region: global
         registry:
-          address: <platform-access-domain-or-vip>:11443
+          address: 156.3.1.26:11443
         replicas: 1
         scheme: https
       provider:
@@ -59,7 +59,7 @@ spec:
               tag: <os-image-tag>
       elemental:
         server:
-          url: https://<platform-access-domain-or-vip>
+          url: https://156.3.1.26
         systemAgent:
           authMode: shared
           splitAuthEnabled: false

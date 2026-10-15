@@ -44,7 +44,7 @@ metadata:
     cpaas.io/cluster-name: global
 spec:
   type: iso
-  baseImage: <platform-access-domain-or-vip>:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+  baseImage: 156.3.1.26:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
   registrationRef:
     apiVersion: elemental.cattle.io/v1beta1
     kind: MachineRegistration

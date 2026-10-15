@@ -4,15 +4,15 @@
     "password": "<base64-platform-admin-password>"
   },
   "registry": {
-    "domain": "<platform-access-domain-or-vip>:11443",
+    "domain": "156.3.1.26:11443",
     "username": "<registry-username>",
     "password": "<base64-registry-password>"
   },
   "console": {
     "host": [
-      "<global-control-plane-vip>"
+      "156.3.1.50"
     ],
-    "globalHost": "<platform-access-domain-or-vip>",
+    "globalHost": "156.3.1.26",
     "httpPort": 80,
     "httpsPort": 443,
     "cert": {
@@ -24,7 +24,7 @@
     "serviceCIDR": "10.4.0.0/16",
     "features": {
       "ha": {
-        "vip": "<global-control-plane-vip>",
+        "vip": "156.3.1.50",
         "vport": 6443,
         "isThirdParty": true
       }

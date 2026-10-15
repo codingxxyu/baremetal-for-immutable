@@ -1,10 +1,9 @@
 # APPLY-ON: bootstrap (minialauda)  — first create only
-# cpaas.io/registry-address here is the bootstrap node (156.3.1.26:11443) so
-# Global hosts can pull images before the platform registry exists.
-# Official installer rewrites THIS Cluster annotation to
-#   <platform-access-domain-or-vip>:11443
-# after the Global registry is up. Do NOT kubectl apply this file again after
-# installer — that restores the bootstrap IP and nodes pull a dead KIND registry.
+# Site: PLATFORM_HOST = HOST_IP = 156.3.1.26, so NODE_REGISTRY_ADDRESS and
+# REGISTRY_DOMAIN are the same host:11443. Installer rewrite of this Cluster
+# annotation is a no-op on the host string. Do NOT re-apply after installer
+# anyway (other fields / CIDRs must stay as reconciled).
+# This is NOT 127.0.0.1 or 172.18.0.1 — those die when KIND is removed.
 # BaremetalCluster is a different object; see 03-baremetal-cluster.yaml.
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster

@@ -11,7 +11,7 @@ baseline:      非 DR · External LB · ISO 首装 · 首次交付不做 Global 
 
 4.4.1 是补丁（CLI 会话刷新、MicroOS alive/iptables）。[OS 矩阵](https://docs.alauda.cn/immutable-infra/1.0/en/overview/os-support-matrix.html) 目前没有 v4.4.1 行，组件版本沿用 v4.4.0 行。Core Package / provider tgz / OS 归档必须是 **同一套 4.4.1 产物**，不要混 4.4.0 包。
 
-1.4.0 把仓库地址寿命写死：引导期 `156.3.1.26:11443`，交接后平台 `:11443`。installer 只改写 Cluster，不改写 BaremetalCluster。API VIP 不是仓库。
+1.4.0：本场 `PLATFORM_HOST` = `HOST_IP` = `156.3.1.26`。仓库主机名交接前后不变；死掉的是 KIND 的 `127.0.0.1` / `172.18.0.1`。installer 只改写 Cluster，不改写 BaremetalCluster。Global API VIP `156.3.1.50`、Workload API VIP `156.3.1.95` 不是仓库。KIND / packtool 在 `/root/installer/res/amd64`。官方 Step 1 那组 `export` 写在第 0 步，**不会**渲染 YAML。
 
 每一份 YAML 第一行是 `APPLY-ON`。apply 前先对 kubeconfig：
 
@@ -98,7 +98,7 @@ workload/worker/manifests/
 11. `global/management/` 禁止 apply 到 minialauda。`bootstrap/01`–`05` 禁止 apply 到成品 Global。
 12. 首次交付不要 apply `global/worker/manifests/`（YAML 第一行是 `DO-NOT-APPLY`）。交接后若要加 Global Worker，用 `global/worker/post-global/`。
 13. SeedImage `spec.size: 20Gi` 需要默认 StorageClass。PVC Pending 时 ISO 不会出 `downloadURL`。
-14. `cpaas.io/registry-address` 只写 `<host>:11443`，不要写 API VIP、不要加 `/v2/`。引导阶段是 `156.3.1.26:11443`；交接后是平台仓库。不要把 `03`/`05` 在 installer 之后再 apply 一遍。
+14. `cpaas.io/registry-address` 只写 `<host>:11443`，不要写 API VIP、不要加 `/v2/`。本场是 `156.3.1.26:11443`（引导节点 IP = 平台入口）。不要写成 `127.0.0.1` 或 `172.18.0.1`。不要把 `03`/`05` 在 installer 之后再 apply 一遍。
 
 ---
 
@@ -114,7 +114,7 @@ workload/worker/manifests/
 | apply `04` 导入清单 | KCP Ready、三台 Master Node Ready | 第 12 步 |
 | POST installer | `04` 已 apply，inventory 名与 Pool 一致；JSON 已校验；curl 在引导节点打 Pod IP:8080 | 第 13–14 步 |
 | 推镜像到平台仓库 | installer Success **且** 第 15 步 handoff 三项都过 | 第 15 步 |
-| 拆 KIND / apply Workload 之前 | Cluster **和** BaremetalCluster 的 `cpaas.io/registry-address` 已是平台仓库，不是 `156.3.1.26` | 第 15.1 步 |
+| 拆 KIND / apply Workload 之前 | Cluster **和** BaremetalCluster 的 `cpaas.io/registry-address` 是 `156.3.1.26:11443`，**不是** `127.0.0.1` / `172.18.0.1` | 第 15.1 步 |
 | apply `global/management/` | 平台仓库已有两个 OS 镜像 + 两个 chart | 第 16 步 |
 | 拆 KIND | 第 15 + 15.1 + 16 + 17 都过；`global-kubeconfig` 能 `get nodes` | 第 17 步末 |
 | apply Workload | 成品 catalog 有 `v1.35.6-acp.1`，KIND 已拆或不再使用；Global 上也有默认 StorageClass | 第 17 步 catalog |
@@ -147,24 +147,23 @@ ctr -n bare-metal-os images ls -q
 
 引导节点：传统 OS（不是 Alauda OS）、静态 IP 整场安装不能变。官方下限 x86_64 **8 核 / 16 GB / 磁盘 ≥ 300 GB**（解压目录 + `/var/cpaas` + `/var/lib/containerd`）。引导节点本身不要求 x86-64-v2；**Alauda OS 物理机**要求 x86-64-v2。
 
-仓库地址不要混。注解格式是 `<host>:11443`，**不要**加 `/v2/`，**不要**写成 API VIP。
+仓库地址不要混。注解格式是 `<host>:11443`，**不要**加 `/v2/`，**不要**写成 API VIP。本场平台入口就是引导节点 IP，所以 `NODE_REGISTRY_ADDRESS` 和 `REGISTRY_DOMAIN` 都是 `156.3.1.26:11443`——变的不是这个 IP，是 KIND 那两个环回地址。
 
-| 地址 | 谁用 | 寿命 |
-|---|---|---|
-| `127.0.0.1:11443` | 引导节点本机 `packtool` / `ctr push` | 引导期 |
-| `172.18.0.1:11443` | KIND 里 AppRelease `repoURL`、Global 控制面 SeedImage `baseImage` | 引导期。KIND 拆掉即死 |
-| `156.3.1.26:11443` | **首次 apply** Global Cluster / BaremetalCluster 的 `cpaas.io/registry-address`；物理机装 OS 时拉镜像 | 临时。installer 之后必须换成平台仓库 |
-| `<platform-access-domain-or-vip>:11443` | installer JSON `registry.domain`；成品 Global / Workload 的注解、AppRelease `repoURL`、SeedImage `baseImage` | 永久。KIND 拆掉后只剩这个 |
+| 官方变量 | 本场值 | 谁用 | 寿命 |
+|---|---|---|---|
+| `LOCAL_REGISTRY_ADDRESS` | `127.0.0.1:11443` | 引导节点本机 `packtool` / `ctr push` | 引导期。KIND 拆掉即死 |
+| `BOOTSTRAP_REGISTRY_ADDRESS` | `172.18.0.1:11443` | KIND 里 AppRelease `repoURL`、Global 控制面 SeedImage `baseImage` | 引导期。KIND 拆掉即死 |
+| `NODE_REGISTRY_ADDRESS` | `156.3.1.26:11443` | Global Cluster / BaremetalCluster 第一次 apply 的 `cpaas.io/registry-address`；物理机装 OS 时拉镜像 | 本场 = 永久平台仓库（同一 IP） |
+| `REGISTRY_DOMAIN` | `156.3.1.26:11443` | installer JSON `registry.domain`；成品 Global / Workload 注解、AppRelease `repoURL`、SeedImage `baseImage` | 永久 |
 
-官方 installer **只改写 Cluster（以及 DCSCluster）** 的 `cpaas.io/registry-address`。**不改写 BaremetalCluster**。所以：
+官方 installer **只改写 Cluster（以及 DCSCluster）** 的 `cpaas.io/registry-address` 为 `REGISTRY_DOMAIN`。本场改写前后字符串相同，是空操作。**不改写 BaremetalCluster**。本场它本来就是 `156.3.1.26:11443`，不用为了「离开引导 IP」去 patch。只有出现 `127.0.0.1` / `172.18.0.1` 才要改。
 
-- Global **Cluster** `05`：第一次写引导 IP。installer Success 后看一眼，应已变成平台仓库。
-- Global **BaremetalCluster** `03`：第一次也写引导 IP。Success 后若还是 `156.3.1.26:11443`，**patch** 成平台仓库，不要重新 apply 这份 YAML。
-- Workload `03` / `05`：创建时就写平台仓库，永远不要写 `156.3.1.26`。
+- Global `03` / `05`：第一次 apply 写 `156.3.1.26:11443`。installer 之后 **不要再 apply**（别把 VIP / 其它已 reconcile 字段冲掉）。
+- Workload `03` / `05`：同样写 `156.3.1.26:11443`。不要写 `172.18.0.1`。
 
-API VIP（`<global-control-plane-vip>`，TCP 6443）只出现在 `BaremetalCluster.spec.controlPlaneLoadBalancer.host`、KCP etcd SAN、installer `console.host`。它不是仓库地址。
+API VIP（`156.3.1.50`，TCP 6443）只出现在 `BaremetalCluster.spec.controlPlaneLoadBalancer.host`、KCP etcd SAN、installer `console.host`。它不是仓库地址。
 
-installer JSON 的 `registry.domain` **必须是平台入口:11443**，不要写引导仓库。不要设 `registry.externalAddress`。
+installer JSON 的 `registry.domain` 本场是 `156.3.1.26:11443`。不要写成 `127.0.0.1` / `172.18.0.1`。不要设 `registry.externalAddress`。
 
 ---
 
@@ -174,9 +173,8 @@ installer JSON 的 `registry.domain` **必须是平台入口:11443**，不要写
 
 | 占位符 | 含义 |
 |---|---|
-| （已填）`156.3.1.26` | 引导节点 IP。dex.tls SAN、elemental `:12443`、**第一次** Global Cluster/BaremetalCluster 仓库注解、installer `hostIP`。不要再搜 `<bootstrap-host-ip>` |
-| `<platform-access-domain-or-vip>` | 平台入口。交接后仓库、elemental `:443`、`console.globalHost`。**可以**和 Global VIP 相同，但仓库端口永远是 `:11443` |
-| `<global-control-plane-vip>` | Global API VIP（TCP 6443）。写进 BaremetalCluster `host` / installer `console.host` / etcd SAN。**不是** `cpaas.io/registry-address` |
+| （已填）`156.3.1.26` | **既是** `HOST_IP` **也是** `PLATFORM_HOST`。dex.tls SAN、elemental `:12443`、仓库 `:11443`、installer `hostIP` / `globalHost`。不要再搜 `<bootstrap-host-ip>` 或 `<platform-access-domain-or-vip>` |
+| （已填）`156.3.1.50` | Global API VIP（TCP 6443）。写进 BaremetalCluster `host` / installer `console.host` / `ha.vip` / etcd SAN / `handoffHook.controlPlaneVIP`。**不是** `cpaas.io/registry-address` |
 | `<unique-vrid>` | 仅 Internal Alive。External 时 **删掉** `vrid` 字段 |
 | `<os-image-tag>` | OCI 归档里两个镜像共用的 tag |
 | `<kubeadm-provider-chart-version>` | kubeadm provider chart 版本 |
@@ -186,7 +184,7 @@ installer JSON 的 `registry.domain` **必须是平台入口:11443**，不要写
 | `<base64-platform-admin-password>` | installer JSON 里的平台管理员密码，**必须是 base64**，不是明文 |
 | `<registry-username>` / `<base64-registry-password>` | 平台仓库账号；密码同样是 base64 |
 | `<workload-cluster-name>` | 不能是 `global` |
-| `<workload-control-plane-vip>` | Workload API VIP |
+| （已填）`156.3.1.95` | Workload API VIP（TCP 6443）。写进 Workload BaremetalCluster `host` / etcd SAN。**不是**仓库 |
 | `<workload-cp-inventory-N>` / `<workload-worker-inventory-1>` | Workload 注册后的 inventory 名 |
 
 CIDR（本包已按现场写入，四处必须一致：Cluster、installer JSON、`site.values`）：
@@ -206,9 +204,31 @@ CIDR（本包已按现场写入，四处必须一致：Cluster、installer JSON�
 
 ## 0. 现场值与进场检查
 
+官方 Global 安装 Step 1 要求在**引导节点 shell** 里先设通用变量（[Prepare Common Variables](https://docs.alauda.cn/immutable-infra/1.0/en/global/install.html#step-1--prepare-common-variables)）。本包 **没有渲染器**：这些 `export` 给 `setup.sh` 和现场对照用，**不会**改 YAML。YAML 已经按同一组值写死。`config/site.values.local.yaml` 只是备忘。
+
+本场值（在引导节点上执行一次，当前 shell 有效；要持久就写进 `~/.bashrc`，不要提交）：
+
+```bash
+export HOST_IP="156.3.1.26"
+export LOCAL_REGISTRY_ADDRESS="127.0.0.1:11443"
+export BOOTSTRAP_REGISTRY_ADDRESS="172.18.0.1:11443"
+export NODE_REGISTRY_ADDRESS="${HOST_IP}:11443"
+export CONTROL_PLANE_VIP="156.3.1.50"
+export PLATFORM_HOST="156.3.1.26"          # 本场 = HOST_IP，不是 API VIP
+export REGISTRY_DOMAIN="${PLATFORM_HOST}:11443"
+export CLUSTER_CIDR="10.3.0.0/16"
+export SERVICE_CIDR="10.4.0.0/16"
+export KUBE_OVN_JOIN_CIDR="100.64.0.0/16"
+export K8S_VERSION="v1.35.6-acp.1"
+export INGRESS_CLASS_NAME="global-alb2"
+# PROVIDER_SECRET_NAME 是 DCS/vSphere/HCS 用的；Bare Metal 首装不需要
+```
+
+对照官方：`LOCAL_*` 本机推包，`BOOTSTRAP_*` KIND 内，`NODE_*` 物理机拉镜像。`/v2/` 只出现在 Registry HTTP API URL，不要写进注解或 `repoURL`。官方文档里的 CIDR 示例是 `100.3/100.4`，**本场不要用**，用上面这一组。
+
 ```bash
 cp config/site.values.example.yaml config/site.values.local.yaml
-# 编辑 local 文件，然后用同一组值替换 YAML 里的 <...>
+# 编辑 local 文件，然后用同一组值替换 YAML 里还剩下的 <...>
 grep -RInE '<[^>]+>' --include='*.yaml' --include='*.json' .
 ```
 
@@ -254,7 +274,7 @@ printf '%s' "$REGPLAIN" | base64 | tr -d '\n'; echo
 
 不要把明文或填好密码的 JSON 提交 git。副本存成引导节点上的 `installer-config.json`（已 gitignore）。
 
-External LB：在 BMC/LB 上确认 `<global-control-plane-vip>:6443` TCP passthrough 到三台 Global 控制面 `:6443`（机器装完才有后端，先把 VIP 和转发规则建好）。
+External LB：在 BMC/LB 上确认 `156.3.1.50:6443` TCP passthrough 到三台 Global 控制面 `:6443`（机器装完才有后端，先把 VIP 和转发规则建好）。
 
 Internal Alive：`03-baremetal-cluster.yaml` 改 `type: Internal`，打开 `vrid`，保证二层能跑 keepalived。
 
@@ -263,9 +283,11 @@ Internal Alive：`03-baremetal-cluster.yaml` 改 `type: Internal`，打开 `vrid
 引导节点 root：
 
 ```bash
-mkdir -p /root/cpaas-install
-tar -xvf installer-core-v4.4.1-hybrid.tar -C /root/cpaas-install
-cd /root/cpaas-install/installer
+# 本场 Core Package 已解到 /root，installer 树就是 /root/installer
+# （官方示例是 /root/cpaas-install；不要再 mkdir 一套平行目录）
+test -x /root/installer/setup.sh
+ls /root/installer/res/amd64/kind /root/installer/res/amd64/packtool /root/installer/res/amd64/nerdctl
+cd /root/installer
 bash setup.sh
 mkdir -p "${HOME}/.local/bin" ~/.kube
 if ! command -v kubectl >/dev/null 2>&1; then
@@ -293,7 +315,8 @@ kubectl get sc -o jsonpath='{range .items[?(@.metadata.annotations.storageclass\
 `nerdctl cp minialauda-control-plane:...` 依赖 Core Package 带的 nerdctl/containerd。如果 `nerdctl` 不在 PATH：
 
 ```bash
-ls /root/cpaas-install/installer/res/amd64/ | head
+ls /root/installer/res/amd64/ | head
+export PATH="/root/installer/res/amd64:${PATH}"
 command -v nerdctl || command -v docker
 # KIND 控制面容器名一般是 minialauda-control-plane
 nerdctl ps --format '{{.Names}}' | grep minialauda || docker ps --format '{{.Names}}' | grep minialauda
@@ -306,7 +329,7 @@ nerdctl ps --format '{{.Names}}' | grep minialauda || docker ps --format '{{.Nam
 packtool 打 **本机** 仓库，不要打 `172.18.0.1`。**先看 help**，不要假设认证开关叫 `-u`：
 
 ```bash
-PACKTOOL=/root/cpaas-install/installer/res/amd64/packtool
+PACKTOOL=/root/installer/res/amd64/packtool
 test -x "$PACKTOOL"
 $PACKTOOL pack push -h
 $PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-kubeadm.amd64.<kubeadm-provider-chart-version>.tgz
@@ -363,7 +386,7 @@ kubectl -n cpaas-system get secret dex.tls
 
 文件：`global/control-plane/bootstrap/02-kubeadm-provider-apprelease.yaml`
 
-改：`<kubeadm-provider-chart-version>`、`<platform-access-domain-or-vip>`。`repoURL` 保持 `172.18.0.1:11443`。
+改：`<kubeadm-provider-chart-version>`、`156.3.1.26`。`repoURL` 保持 `172.18.0.1:11443`。
 
 ```bash
 kubectl apply -f global/control-plane/bootstrap/02-kubeadm-provider-apprelease.yaml
@@ -380,7 +403,7 @@ kubectl -n cpaas-system get apprelease cluster-api-provider-kubeadm
 platformUrl: https://156.3.1.26
 provider.imageCatalog.images.v1.35.6-acp.1.tag: <os-image-tag>
 elemental.server.url: https://156.3.1.26:12443
-handoffHook.controlPlaneVIP: <global-control-plane-vip>
+handoffHook.controlPlaneVIP: 156.3.1.50
 ```
 
 ```bash
@@ -599,13 +622,13 @@ metadata:
 spec:
   controlPlaneLoadBalancer:
     type: External
-    host: <global-control-plane-vip>
+    host: 156.3.1.50
     port: 6443
     # External：删掉 vrid
   networkDevice: eth0
 ```
 
-`cpaas.io/registry-address` 在**第一次 apply** 时是 `156.3.1.26:11443`（物理机能打到引导仓库）。installer 只改写 **Cluster**，不改写这份 BaremetalCluster。交接后若还是引导 IP，见第 15.1 步 patch。**installer 之后不要再 apply 03/05。**
+`cpaas.io/registry-address` 第一次 apply 就是 `156.3.1.26:11443`。本场平台入口同一 IP，installer 改写 Cluster 是空操作；BaremetalCluster 官方不改，保持这个值即可。见第 15.1 步。**installer 之后不要再 apply 03/05。**
 
 **Cluster** `05-cluster.yaml` — `metadata.name: global`，`is-global: "true"`，k8s `v1.35.6-acp.1`，kube-ovn `v4.4.6`。
 
@@ -617,8 +640,8 @@ spec:
 sshAuthorizedKeys:
   - "<ssh-authorized-keys>"
 etcd.local.serverCertSANs:
-  - "<global-control-plane-vip>"
-  - "<platform-access-domain-or-vip>"
+  - "156.3.1.50"
+  - "156.3.1.26"
 ```
 
 版本不要改：`v1.35.6-acp.1` / coredns `1.14.3-v4.4.6` / etcd `v3.6.13-acp.0`。`maxSurge: 0`。`skip-kube-proxy` 注解保留（kube-ovn）。
@@ -671,7 +694,7 @@ kubectl -n cpaas-system get cm dcs-import-extra-resources -o yaml
 
 文件：`global/control-plane/bootstrap/05-installer-config-baremetal.json`
 
-改密码、VIP、`hostIP: 156.3.1.26`。`registry.domain` 必须是 `<platform-access-domain-or-vip>:11443`，**不要**写引导仓库。不要设 `registry.externalAddress`。`ha.isThirdParty: true`。产品保持 `base` + `acp`。
+改密码、VIP、`hostIP: 156.3.1.26`。`registry.domain` 本场是 `156.3.1.26:11443`（`REGISTRY_DOMAIN`，不是 `127.0.0.1` / `172.18.0.1`）。不要设 `registry.externalAddress`。`ha.isThirdParty: true`。产品保持 `base` + `acp`。
 
 `console.host` 是控制面 VIP（不要带 `https://`、不要带端口）；平台入口写在 `console.globalHost`。
 
@@ -725,34 +748,27 @@ kubectl --kubeconfig global-kubeconfig -n cpaas-system \
 
 非 DR（本包 `splitAuthEnabled: false`）：成品 Global 只有共享身份 `baremetal-system-agent`。
 
-## 15.1 确认仓库注解已经离开引导节点
+## 15.1 确认仓库注解不是 KIND 环回
 
-官方文档：installer 把 **Cluster / DCSCluster** 的 `cpaas.io/registry-address` 改成平台仓库。Bare Metal 没有 DCSCluster；**BaremetalCluster 不在改写名单里**。拆 KIND 之前，**两边 kubeconfig 上**两份对象都必须指向平台仓库，否则节点还去打 `156.3.1.26:11443`。
+本场 `PLATFORM_HOST` = `HOST_IP` = `156.3.1.26`。官方 installer 把 Cluster / DCSCluster 的 `cpaas.io/registry-address` 改成 `REGISTRY_DOMAIN`，字符串还是 `156.3.1.26:11443`，等于没改。**BaremetalCluster 不在改写名单里**，本场它本来就是这个值，不用 patch。
+
+拆 KIND 之前两边 kubeconfig 都看一眼，确认 **没有** `127.0.0.1:11443` / `172.18.0.1:11443`（那两个随 KIND 一起死）：
 
 ```bash
-# 引导集群（minialauda）—— installer 先改这里
 kubectl -n cpaas-system get cluster,baremetalcluster global -o \
   custom-columns='KIND:.kind,REG:.metadata.annotations.cpaas\.io/registry-address'
-# 成品 Global（导入之后才有）
 kubectl --kubeconfig global-kubeconfig -n cpaas-system get cluster,baremetalcluster global -o \
   custom-columns='KIND:.kind,REG:.metadata.annotations.cpaas\.io/registry-address'
 ```
 
-期待全部是 `<platform-access-domain-or-vip>:11443`。
-
-- Cluster 仍是 `156.3.1.26:11443`：installer 没改写完，先别拆 KIND，先查 installer 日志。不要手工改 Cluster 就当交接成功。
-- BaremetalCluster 仍是 `156.3.1.26:11443`、Cluster 已经是平台仓库：这是预期缺口，**patch 还停在引导 IP 的那一份**，不要 `kubectl apply -f 03-baremetal-cluster.yaml`（那份文件还写着引导 IP）：
+期待全部是 `156.3.1.26:11443`。若出现环回 / KIND 地址才 patch：
 
 ```bash
-# 哪边 get 出来还是 156.3.1.26，就在哪边 patch
 kubectl -n cpaas-system annotate baremetalcluster global \
-  cpaas.io/registry-address=<platform-access-domain-or-vip>:11443 --overwrite
-# 或：
-kubectl --kubeconfig global-kubeconfig -n cpaas-system annotate baremetalcluster global \
-  cpaas.io/registry-address=<platform-access-domain-or-vip>:11443 --overwrite
+  cpaas.io/registry-address=156.3.1.26:11443 --overwrite
 ```
 
-不要把 API VIP 填进这个注解（VIP 是 6443，仓库是 11443）。
+不要把 API VIP 填进这个注解（VIP 是 6443，仓库是 11443）。不要为了「离开引导 IP」去改已经正确的 `156.3.1.26:11443`。
 
 **现在先去做第 16–17 步。** 第 17 步完成之前，引导节点还要用来 `ctr push` OS 镜像，KIND 先留着。
 
@@ -775,7 +791,7 @@ GLOBAL_REGISTRY_ADDRESS="$(kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" \
   get productbase.product.alauda.io base -o jsonpath='{.spec.registry.address}')"
 GLOBAL_REGISTRY_PASSWORD="$(kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
   get secret registry-admin -o jsonpath='{.data.password}' | base64 -d)"
-echo "${GLOBAL_REGISTRY_ADDRESS}"   # 应类似 <platform-access-domain-or-vip>:11443
+echo "${GLOBAL_REGISTRY_ADDRESS}"   # 应类似 156.3.1.26:11443
 ```
 
 OS 镜像仍从引导节点的 `bare-metal-os` namespace 推（`--skip-verify` 必须带 `--local`）：
@@ -801,7 +817,7 @@ ctr -n bare-metal-os images rm \
 两个 provider tgz 用 packtool 推到 **同一** `${GLOBAL_REGISTRY_ADDRESS}`。成品仓库有认证。用户是 `admin`，密码是上面的 `GLOBAL_REGISTRY_PASSWORD`（明文，不是 installer JSON 里那串 base64）。**先看 help**，不要假设 `-u`：
 
 ```bash
-PACKTOOL=/root/cpaas-install/installer/res/amd64/packtool
+PACKTOOL=/root/installer/res/amd64/packtool
 $PACKTOOL pack push -h
 # 按 help 选认证开关。下面只是一种常见形状：
 $PACKTOOL pack push \
@@ -835,7 +851,7 @@ kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
 - `global/management/01-kubeadm-provider-apprelease.yaml`
 - `global/management/02-baremetal-provider-apprelease.yaml`
 
-改 chart 版本、`<platform-access-domain-or-vip>`、`<os-image-tag>`。`repoURL` 是平台仓库，不是 `172.18.0.1`。
+改 chart 版本、`156.3.1.26`、`<os-image-tag>`。`repoURL` 是平台仓库，不是 `172.18.0.1`。
 
 ```bash
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" apply -f global/management/01-kubeadm-provider-apprelease.yaml
@@ -895,7 +911,7 @@ kind delete cluster --name minialauda
 文件：`workload/control-plane/manifests/01-registration-seedimage.yaml`
 
 ```text
-baseImage: <platform-access-domain-or-vip>:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+baseImage: 156.3.1.26:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
 ```
 
 ```bash
@@ -932,7 +948,7 @@ kubectl apply -f workload/control-plane/manifests/05-cluster.yaml
 kubectl apply -f workload/control-plane/manifests/06-control-plane.yaml
 ```
 
-`03` External 时删 `vrid`。KCP 只改 ssh 公钥和 `<workload-control-plane-vip>` SAN。CIDR 不要和 Global / 其它 Workload 冲突。
+`03` External 时删 `vrid`。KCP 只改 ssh 公钥和 `156.3.1.95` SAN。CIDR 不要和 Global / 其它 Workload 冲突。
 
 ```bash
 kubectl -n cpaas-system get cluster,kubeadmcontrolplane,machine -l cpaas.io/cluster-name=<workload-cluster-name>
@@ -1042,20 +1058,20 @@ BMC 仍从虚拟光驱启动。弹出 ISO，disk-first，再确认 `/` 不是 `L
 | 阶段 | elemental.server.url |
 |---|---|
 | 引导（minialauda） | `https://156.3.1.26:12443` |
-| 成品 Global / Workload | `https://<platform-access-domain-or-vip>`（ingress **443**，没有 `:12443`） |
+| 成品 Global / Workload | `https://156.3.1.26`（ingress **443**，没有 `:12443`） |
 
 引导阶段 `dex.tls` 必须含引导节点 IP SAN。交接后新 Registration 走平台域名，不要再用引导 ISO。
 
-## 节点还在打引导仓库 / MANIFEST_UNKNOWN 在 156.3.1.26
+## 节点还在打 KIND 仓库 / MANIFEST_UNKNOWN 在 127.0.0.1 或 172.18.0.1
 
-KIND 拆掉之后 `156.3.1.26:11443` 就是死地址。查：
+本场 `156.3.1.26:11443` **不是**死地址：平台仓库就跑在这台引导机 IP 上（KIND 拆掉后，11443 应由成品 Global 的平台仓库接住）。死的是 `127.0.0.1:11443` 和 `172.18.0.1:11443`。查：
 
 ```bash
 kubectl -n cpaas-system get cluster,baremetalcluster -o \
   custom-columns='KIND:.kind,NAME:.metadata.name,REG:.metadata.annotations.cpaas\.io/registry-address'
 ```
 
-Cluster 应由 installer 改成平台仓库。BaremetalCluster 若仍是引导 IP，按第 15.1 步 patch。Workload 对象如果写成了 `156.3.1.26`，改成平台仓库后让 Machine 重建，不要指望它自己好。不要把 API VIP 填进这个注解。
+注解必须是 `156.3.1.26:11443`。若是环回 / KIND 地址，按第 15.1 步 patch。不要把 API VIP 填进这个注解。OS / chart 仍要按第 16 步推进**平台**仓库（同一 IP、KIND 拆掉之后的那个 11443），不推照样 `MANIFEST_UNKNOWN`。
 
 ## 不要做的清理
 
@@ -1107,7 +1123,7 @@ JSON 不能写 `APPLY-ON`。installer 文件的目标写在 `global/control-plan
 
 | 文件 | 必改 |
 |---|---|
-| `workload/control-plane/manifests/03` 和 `05` | 集群名（不能是 `global`）；`cpaas.io/registry-address` **必须是平台仓库**，不要写 `156.3.1.26` |
+| `workload/control-plane/manifests/03` 和 `05` | 集群名（不能是 `global`）；`cpaas.io/registry-address` 本场是 `156.3.1.26:11443`，不要写 `172.18.0.1` |
 | `workload/control-plane/manifests/*` | OS tag、inventory、VIP、ssh |
 | `workload/worker/manifests/*` | 集群名、OS tag、inventory、ssh |
 

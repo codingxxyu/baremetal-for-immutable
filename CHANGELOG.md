@@ -2,15 +2,17 @@
 
 ## 1.4.0 — 2026-10-16
 
-Delivery gap-fill on registry addresses and post-handoff traps. ACP still **v4.4.1**.
+Delivery gap-fill on registry addresses, official Step 1 variables, and post-handoff traps. ACP still **v4.4.1**.
 
+- Site: `PLATFORM_HOST` = `HOST_IP` = `156.3.1.26`. Registry host does not change at handoff. What dies is KIND `127.0.0.1:11443` / `172.18.0.1:11443`.
 - `cpaas.io/registry-address` is **not** the Global API VIP. It is `<host>:11443` only (no `/v2/`).
-- Global **Cluster** (bootstrap apply): `156.3.1.26:11443`. Official installer rewrites **Cluster** (and DCSCluster) to `<platform-access-domain-or-vip>:11443` after the platform registry is up. Do **not** re-apply `global/control-plane/manifests/05-cluster.yaml` after that rewrite — it would put the bootstrap IP back.
-- Global **BaremetalCluster** starts with the same bootstrap IP. Official rewrite set is Cluster / DCSCluster, **not** BaremetalCluster. After installer Success, if BaremetalCluster still shows `156.3.1.26:11443`, patch it to the platform registry before tearing KIND down. Do **not** re-apply `03-baremetal-cluster.yaml` after installer.
-- Workload Cluster / BaremetalCluster are created on the finished Global and already use the platform registry. Never put the bootstrap IP there.
-- `console.host` / BaremetalCluster `spec.controlPlaneLoadBalancer.host` stay the API VIP (`<global-control-plane-vip>`). That VIP is TCP 6443, not the registry.
-- New gate: after installer, print Cluster and BaremetalCluster `cpaas.io/registry-address` and confirm they are the platform host, not `156.3.1.26`.
-- First-delivery Global workers after handoff: `global/worker/post-global/` (platform `baseImage`). Bootstrap-phase YAML in `global/worker/manifests/` stays `DO-NOT-APPLY` and still points at `172.18.0.1:11443`.
+- Official installer rewrites Cluster / DCSCluster `cpaas.io/registry-address` to `REGISTRY_DOMAIN`. On this site that string is already `156.3.1.26:11443`, so the rewrite is a no-op. BaremetalCluster is **not** in the rewrite set; leave it if it already shows `156.3.1.26:11443`. Patch only if it shows loopback / KIND.
+- Do **not** re-apply Global `03` / `05` after installer (other live fields, not the registry host).
+- Workload Cluster / BaremetalCluster use `156.3.1.26:11443` (platform registry on the same IP). Never `172.18.0.1`.
+- Global API VIP is `156.3.1.50` (BaremetalCluster `host`, installer `console.host` / `ha.vip`, KCP etcd SAN, `handoffHook.controlPlaneVIP`). Workload API VIP is `156.3.1.95`. Neither is a registry address.
+- This site Core Package tree is `/root/installer` (KIND / packtool / nerdctl at `/root/installer/res/amd64`). Official example `/root/cpaas-install` is not this site.
+- README now includes official Step 1 `export` block, filled with this site's values. There is still **no renderer**: the exports are for the operator's shell / `setup.sh`; YAML is already baked.
+- First-delivery Global workers after handoff: `global/worker/post-global/` (platform `baseImage` `156.3.1.26:11443`). Bootstrap-phase YAML in `global/worker/manifests/` stays `DO-NOT-APPLY` (`172.18.0.1:11443`).
 
 ## 1.3.0 — 2026-10-16
 
