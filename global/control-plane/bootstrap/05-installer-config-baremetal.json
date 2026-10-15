@@ -5,7 +5,7 @@
   },
   "registry": {
     "domain": "156.3.1.50:11443",
-    "username": "<registry-username>",
+    "username": "admin",
     "password": "<base64-registry-password>"
   },
   "console": {

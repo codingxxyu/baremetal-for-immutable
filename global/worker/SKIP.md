@@ -11,7 +11,7 @@ After `global/management/` is Ready, add Global workers from `post-global/`
 (same flow as Workload workers):
 
 1. Apply `post-global/01-registration-seedimage.yaml` on the **finished Global**
-   (`global-kubeconfig`). `baseImage` is the platform registry.
+   (`global-kubeconfig`). KubeOS `baseImage` is `kubeos-iso` in the platform registry; its `install.system-uri` is the matching `kubeos-rootfs` image.
 2. Never reuse the control-plane ISO or `manifests/01` (`172.18.0.1:11443`).
 3. Confirm Cluster / BaremetalCluster `cpaas.io/registry-address` is already
    `156.3.1.50:11443` before building the worker ISO.

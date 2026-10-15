@@ -11,7 +11,9 @@ Do **not** apply this directory onto minialauda.
 
 `elemental.server.url` is `https://156.3.1.50` (ingress 443). It is **not** bootstrap `:12443`.
 
-Catalog on Global starts empty. Confirm `elemental-image-catalog` has `v1.35.6-acp.1` before any Workload apply.
+Catalog on Global starts empty. Confirm `elemental-image-catalog` has `v1.35.6-acp.1_amd64_alaudaos.k.25` resolving to `tkestack/kubeos-rootfs:alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64` before any Workload apply.
+
+For KubeOS K25, `SeedImage.baseImage` uses `kubeos-iso`, while `MachineRegistration.config.elemental.install.system-uri` uses `kubeos-rootfs`. Bootstrap SeedImages use `172.18.0.1:11443`; post-handoff registrations and SeedImages use `156.3.1.50:11443`.
 
 Before tearing KIND down, both Cluster/global and BaremetalCluster/global must
 show `cpaas.io/registry-address: 156.3.1.50:11443`, never `127.0.0.1`,

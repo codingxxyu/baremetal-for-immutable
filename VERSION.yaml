@@ -1,7 +1,7 @@
 # Delivery-pack identity. Not rendered. Do not confuse with ACP / Kubernetes versions.
 pack: baremetal-for-immutable
-pack_version: "1.4.0"
-released: "2026-10-16"
+pack_version: "1.5.0"
+released: "2026-10-15"
 acp_version: v4.4.1
 kubernetes_version: v1.35.6-acp.1
 etcd_image_tag: v3.6.13-acp.0
@@ -47,11 +47,22 @@ workload:
 core_package:
   installer_dir: /root/installer
   packtool: /root/installer/res/amd64/packtool
+os:
+  family: KubeOS
+  id: alaudaos.k.25
+  delivery_architecture: x86_64
+  target_platform: linux/amd64
+  source_tag: baremetal
+  image_tag_base: alaudaos-feat-kubeos-provider-integration.ku.202609281026-0
+  image_tag: alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
+  rootfs_repository: tkestack/kubeos-rootfs
+  iso_repository: tkestack/kubeos-iso
+  catalog_key: v1.35.6-acp.1_amd64_alaudaos.k.25
 providers:
   kubeadm_pack: cluster-api-provider-kubeadm.ALL.v1.0.14.tgz
   kubeadm_chart: v1.0.14
-  baremetal_pack: cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
-  baremetal_chart: v1.0.0-beta.6.ge76cf8f8
+  baremetal_pack: cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz
+  baremetal_chart: v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support
 gates:
   seedimage: status.downloadURL-nonempty
   installer_json: POST-on-bootstrap-node-to-installer-pod-ip-8080

@@ -1,6 +1,6 @@
 # APPLY-ON: bootstrap (minialauda)
 # Apply on the bootstrap cluster AFTER the Bare Metal provider is Ready
-# and elemental-image-catalog contains v1.35.6-acp.1.
+# and elemental-image-catalog contains v1.35.6-acp.1_amd64_alaudaos.k.25.
 # This ISO belongs to bootstrap. Do not reuse it after handoff.
 # Worker hosts use global/worker/manifests/01-registration-seedimage.yaml.
 #
@@ -24,17 +24,17 @@ spec:
     pool.baremetal.alauda.io/eligible: "true"
     elemental.cattle.io/serial-number: "${System Information/Serial Number}"
     cpaas.io/cluster-name: global
+    os.baremetal.alauda.io/id: alaudaos.k.25
+    os.baremetal.alauda.io/arch: "${Runtime/Architecture}"
   machineInventoryAnnotations:
     elemental.cattle.io/machine-uuid: "${System Information/UUID}"
   config:
     elemental:
       install:
         device: /dev/elemental-install-target
+        system-uri: 156.3.1.26:11443/tkestack/kubeos-rootfs:alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
         eject-cd: true
         reboot: true
-        snapshotter:
-          type: btrfs
-          maxSnaps: 4
       registration:
         emulate-tpm: true
         emulated-tpm-seed: -1
@@ -49,7 +49,7 @@ metadata:
     cpaas.io/cluster-name: global
 spec:
   type: iso
-  baseImage: 172.18.0.1:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+  baseImage: 172.18.0.1:11443/tkestack/kubeos-iso:alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
   registrationRef:
     apiVersion: elemental.cattle.io/v1beta1
     kind: MachineRegistration
@@ -58,15 +58,3 @@ spec:
   targetPlatform: linux/amd64
   size: 20Gi
   cleanupAfterMinutes: 120
-  cloud-config:
-    stages:
-      boot:
-        - name: "Size COS_STATE for reprovisioning"
-          files:
-            - path: /etc/elemental/config.d/partitions.yaml
-              permissions: 0644
-              content: |
-                install:
-                  partitions:
-                    state:
-                      size: 20480

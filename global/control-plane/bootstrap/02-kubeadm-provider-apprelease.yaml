@@ -18,26 +18,26 @@ spec:
       - name: ait/chart-cluster-api-provider-kubeadm
         releaseName: cluster-api-provider-kubeadm
         targetRevision: v1.0.14
-        repoURL: 172.18.0.1:11443
-    timeout: 120
-    values:
-      global:
-        albName: global-alb2
-        auth:
-          default_admin: admin@cpaas.io
-        cluster:
-          isGlobal: true
-          name: global
-          networkType: kube-ovn
-          type: Baremetal
-        host: 156.3.1.26
-        ingress:
-          ingressClassName: global-alb2
-        labelBaseDomain: cpaas.io
-        namespace: cpaas-system
-        platformUrl: https://156.3.1.26
-        region: global
-        registry:
-          address: 172.18.0.1:11443
-        replicas: 1
-        scheme: https
+    repoURL: 172.18.0.1:11443
+  timeout: 120
+  values:
+    global:
+      albName: global-alb2
+      auth:
+        default_admin: admin@cpaas.io
+      cluster:
+        isGlobal: true
+        name: global
+        networkType: kube-ovn
+        type: Baremetal
+      host: 156.3.1.26
+      ingress:
+        ingressClassName: global-alb2
+      labelBaseDomain: cpaas.io
+      namespace: cpaas-system
+      platformUrl: https://156.3.1.26
+      region: global
+      registry:
+        address: 172.18.0.1:11443
+      replicas: 1
+      scheme: https

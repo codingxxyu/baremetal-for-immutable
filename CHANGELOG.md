@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0 — 2026-10-15
+
+KubeOS `alaudaos.k.25` variant for ACP **v4.4.1**, x86_64 delivery.
+
+- Uses `kubeos-rootfs` and `kubeos-iso`; imported source tag is `baremetal`, final delivery tag is `alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64`.
+- Uses catalog key `v1.35.6-acp.1_amd64_alaudaos.k.25` and inventory labels `os.baremetal.alauda.io/id` / `os.baremetal.alauda.io/arch`.
+- Adds KubeOS `install.system-uri`, removes the generic btrfs snapshotter and COS_STATE cloud-config, and keeps the generic `/dev/elemental-install-target` workflow.
+- Uses Bare Metal provider `v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support`; kubeadm remains `v1.0.14`.
+- Preserves site registry handoff, Global/Workload VIPs, `hcs-workloadcluster`, and the first-delivery Global-worker skip policy.
+
 ## 1.4.0 — 2026-10-16
 
 Delivery gap-fill on registry addresses, official Step 1 variables, and post-handoff traps. ACP still **v4.4.1**.

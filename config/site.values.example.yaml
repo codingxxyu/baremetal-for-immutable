@@ -1,4 +1,4 @@
-# Pack 1.4.0 / ACP v4.4.1. Copy to site.values.local.yaml (gitignored).
+# Pack 1.5.0 / ACP v4.4.1 / AlaudaOS K25 KubeOS. Copy to site.values.local.yaml (gitignored).
 # There is no renderer. Editing this file does nothing to the manifests.
 # Search-replace the same <placeholder> strings in the YAML/JSON this file
 # names, then kubectl apply. Do not commit passwords, kubeconfigs, ISOs, or
@@ -21,16 +21,24 @@ kube_ovn_chart: v4.4.6
 architecture: linux/amd64
 namespace: cpaas-system
 
-# Tag shared by both images in the Bare Metal OS OCI archive.
-# Fill after: ctr -n bare-metal-os images ls -q
-os_image_tag: <os-image-tag>
+os:
+  family: KubeOS
+  id: alaudaos.k.25
+  architecture: x86_64
+  target_platform: linux/amd64
+  source_tag: baremetal
+  image_tag_base: alaudaos-feat-kubeos-provider-integration.ku.202609281026-0
+  image_tag: alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
+  rootfs_repository: tkestack/kubeos-rootfs
+  iso_repository: tkestack/kubeos-iso
+  catalog_key: v1.35.6-acp.1_amd64_alaudaos.k.25
 
 # Customer Portal packages. Chart versions must come from the same ACP 4.4.1 payload.
 core_package: installer-core-v4.4.1-hybrid.tar
 kubeadm_provider_pack: cluster-api-provider-kubeadm.ALL.v1.0.14.tgz
-baremetal_provider_pack: cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
+baremetal_provider_pack: cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz
 kubeadm_provider_chart_version: v1.0.14
-baremetal_provider_chart_version: v1.0.0-beta.6.ge76cf8f8
+baremetal_provider_chart_version: v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support
 bare_metal_os_archive: <bare-metal-os-archive>.tar
 
 bootstrap:
@@ -72,7 +80,6 @@ ssh:
 
 install:
   device: /dev/elemental-install-target
-  cos_state_size_mib: 20480
   emulate_tpm: true
   emulated_tpm_seed: -1
 

@@ -1,7 +1,8 @@
-# ACP 4.4.1 Bare Metal 交付包
+# ACP 4.4.1 / AlaudaOS K25 KubeOS Bare Metal 交付包
 
 ```text
-pack:          baremetal-for-immutable 1.4.0   (见 VERSION.yaml)
+pack:          baremetal-for-immutable 1.5.0   (见 VERSION.yaml)
+OS:             KubeOS `alaudaos.k.25` (x86_64 delivery)
 ACP:           v4.4.1
 Kubernetes:    v1.35.6-acp.1   (官方 OS 矩阵仍是 v4.4.0 那一行)
 baseline:      非 DR · External LB · ISO 首装 · 首次交付不做 Global Worker
@@ -9,9 +10,9 @@ baseline:      非 DR · External LB · ISO 首装 · 首次交付不做 Global 
 
 现场按本文一步做。这是 **ACP v4.4.1 全新安装**：先在一台传统 OS 引导节点上起 KIND `minialauda`，再用 ISO 装三台 Global 控制面，installer 交接后，Global 才是管理集群。**不要**把压模 apply 到已经在跑的传统 OS Global 上。
 
-4.4.1 是补丁（CLI 会话刷新、MicroOS alive/iptables）。[OS 矩阵](https://docs.alauda.cn/immutable-infra/1.0/en/overview/os-support-matrix.html) 目前没有 v4.4.1 行，组件版本沿用 v4.4.0 行。Core Package / provider tgz / OS 归档必须是 **同一套 4.4.1 产物**，不要混 4.4.0 包。
+4.4.1 是补丁（CLI 会话刷新等）。本分支的物理机 OS 变体是 **KubeOS `alaudaos.k.25`**，不是默认的 MicroOS 变体。KubeOS provider、OS 归档和 Core Package 必须来自同一套兼容产物；不要把普通 Bare Metal provider 与 KubeOS OS 归档混用。
 
-1.4.0：`HOST_IP` = `156.3.1.26`（引导）。`PLATFORM_HOST` = `CONTROL_PLANE_VIP` = `156.3.1.50`（API 6443 + console 80/443 + 平台仓库 11443）。installer 把 Cluster 注解从 `156.3.1.26:11443` 改写成 `156.3.1.50:11443`；BaremetalCluster 不改写，交接后要 patch。KIND / packtool 在 `/root/installer/res/amd64`。官方 Step 1 `export` 写在第 0 步，**不会**渲染 YAML。
+1.5.0：KubeOS `alaudaos.k.25`；`HOST_IP` = `156.3.1.26`（引导）。`PLATFORM_HOST` = `CONTROL_PLANE_VIP` = `156.3.1.50`（API 6443 + console 80/443 + 平台仓库 11443）。installer 把 Cluster 注解从 `156.3.1.26:11443` 改写成 `156.3.1.50:11443`；BaremetalCluster 不改写，交接后要 patch。KIND / packtool 在 `/root/installer/res/amd64`。官方 Step 1 `export` 写在第 0 步，**不会**渲染 YAML。
 
 每一份 YAML 第一行是 `APPLY-ON`。apply 前先对 kubeconfig：
 
@@ -108,7 +109,7 @@ workload/worker/manifests/
 
 | 过了才能做 | 检查 | 必须 |
 |---|---|---|
-| apply Registration / SeedImage | catalog 有 `v1.35.6-acp.1`；BM provider Ready；**默认 StorageClass 能绑定 20Gi PVC** | 第 5 步、进场检查 |
+| apply Registration / SeedImage | catalog 有 `v1.35.6-acp.1_amd64_alaudaos.k.25`；BM provider Ready；**默认 StorageClass 能绑定 20Gi PVC** | 第 5 步、进场检查 |
 | 挂 ISO | `status.downloadURL` 非空（不要死等某个 condition 名字） | 第 6 步 |
 | apply Pool / KCP | 三台 Inventory `Ready=True`，已离开 Live | 第 8–9 步 |
 | apply `04` 导入清单 | KCP Ready、三台 Master Node Ready | 第 12 步 |
@@ -117,7 +118,7 @@ workload/worker/manifests/
 | 拆 KIND / apply Workload 之前 | Cluster **和** BaremetalCluster 的 `cpaas.io/registry-address` 是 `156.3.1.50:11443`，**不是** `127.0.0.1` / `172.18.0.1` / 残留的 `156.3.1.26:11443` | 第 15.1 步 |
 | apply `global/management/` | 平台仓库已有两个 OS 镜像 + 两个 chart | 第 16 步 |
 | 拆 KIND | 第 15 + 15.1 + 16 + 17 都过；`global-kubeconfig` 能 `get nodes` | 第 17 步末 |
-| apply Workload | 成品 catalog 有 `v1.35.6-acp.1`，KIND 已拆或不再使用；Global 上也有默认 StorageClass | 第 17 步 catalog |
+| apply Workload | 成品 catalog 有 `v1.35.6-acp.1_amd64_alaudaos.k.25`，KIND 已拆或不再使用；Global 上也有默认 StorageClass | 第 17 步 catalog |
 
 ---
 
@@ -129,10 +130,10 @@ workload/worker/manifests/
 |---|---|
 | `installer-core-v4.4.1-hybrid.tar` | Core Package。`setup.sh` 起 KIND minialauda + 嵌入式仓库 + cpaas-installer |
 | `cluster-api-provider-kubeadm.ALL.v1.0.14.tgz` | packtool 推进引导仓库 |
-| `cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz` | 同上 |
-| `<bare-metal-os-archive>.tar` | Bare Metal OS **OCI 归档**（不是 qcow2）。里面是 `baremetal-base-image-iso` 和 `baremetal-base-image`，**同一个 tag** |
+| `cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz` | 同上 |
+| `<bare-metal-os-archive>.tar` | Bare Metal OS **OCI 归档**（不是 qcow2）。里面是 `kubeos-iso` 和 `kubeos-rootfs`，导入源 tag 是 `baremetal`；推到 registry 时使用带 `.x86_64` 后缀的最终 tag |
 
-本场 chart 版本已写入 AppRelease `targetRevision`（从 `.ALL.` tgz 文件名）：kubeadm `v1.0.14`，baremetal `v1.0.0-beta.6.ge76cf8f8`。packtool 推完后若仓库里的 chart 版本字符串不一致，以 `helm show chart` / registry tags 为准再改 YAML。
+本场 chart 版本已写入 AppRelease `targetRevision`（从 `.ALL.` tgz 文件名）：kubeadm `v1.0.14`，KubeOS Bare Metal provider `v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support`。packtool 推完后若仓库里的 chart 版本字符串不一致，以 `helm show chart` / registry tags 为准再改 YAML。
 
 OS tag 在导入后读：
 
@@ -140,7 +141,7 @@ OS tag 在导入后读：
 ctr -n bare-metal-os images ls -q
 ```
 
-把完整 tag 填进所有 `<os-image-tag>`。catalog 缺 `v1.35.6-acp.1` 时 CAPI 会停在 `ImageCatalogMiss`，这是终态错误，不是暂时的。
+本分支固定最终 tag 为 `alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64`；本地归档源引用仍是 `kubeos-rootfs:baremetal` / `kubeos-iso:baremetal`。catalog 缺 `v1.35.6-acp.1_amd64_alaudaos.k.25` 时 CAPI 会停在 `ImageCatalogMiss`，这是终态错误，不是暂时的。
 
 引导节点：传统 OS（不是 Alauda OS）、静态 IP 整场安装不能变。官方下限 x86_64 **8 核 / 16 GB / 磁盘 ≥ 300 GB**（解压目录 + `/var/cpaas` + `/var/lib/containerd`）。引导节点本身不要求 x86-64-v2；**Alauda OS 物理机**要求 x86-64-v2。
 
@@ -173,13 +174,13 @@ installer JSON 的 `registry.domain` / `console.globalHost` 本场是 `156.3.1.5
 | （已填）`156.3.1.26` | **只是** `HOST_IP`。dex.tls SAN、elemental `:12443`、第一次 Cluster 注解、installer `hostIP`。不要再搜 `<bootstrap-host-ip>` |
 | （已填）`156.3.1.50` | **既是** `CONTROL_PLANE_VIP` **也是** `PLATFORM_HOST`。API 6443 + console 80/443 + 平台仓库 11443。写进 `console.host` / `globalHost` / `registry.domain` / 交接后 `cpaas.io/registry-address` / etcd SAN / `handoffHook` |
 | `<unique-vrid>` | 仅 Internal Alive。External 时 **删掉** `vrid` 字段 |
-| `<os-image-tag>` | OCI 归档里两个镜像共用的 tag |
+| （已填）`alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64` | KubeOS x86_64 最终 tag；本地导入源 tag 是 `baremetal` |
 | （已填）`v1.0.14` | kubeadm provider `targetRevision`。现场包 `cluster-api-provider-kubeadm.ALL.v1.0.14.tgz` |
-| （已填）`v1.0.0-beta.6.ge76cf8f8` | BM provider `targetRevision`。现场包 `cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz` |
+| （已填）`v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support` | KubeOS BM provider `targetRevision`。现场包 `cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz` |
 | `<ssh-authorized-keys>` | `boot` 用户公钥，完整一行 |
 | `<global-machine-inventory-N>` | 注册后的 MachineInventory 名，不要猜 |
 | `<base64-platform-admin-password>` | installer JSON 里的平台管理员密码，**必须是 base64**，不是明文 |
-| `<registry-username>` / `<base64-registry-password>` | 平台仓库账号；密码同样是 base64 |
+| `admin` / `<base64-registry-password>` | 平台仓库账号；registry 用户按产品约定为 `admin`，现场只需生成并填写密码的 base64 值 |
 | （已填）`hcs-workloadcluster` | Workload 集群名（不能是 `global`）。hostname 为 `hcs-workloadcluster-cp-N` / `hcs-workloadcluster-worker-1`。inventory **name** 仍是注册后的 MachineInventory 名，不要猜 |
 | （已填）`156.3.1.95` | Workload API VIP（TCP 6443）。写进 Workload BaremetalCluster `host` / etcd SAN。**不是**仓库 |
 | `<workload-cp-inventory-N>` / `<workload-worker-inventory-1>` | Workload 注册后的 inventory 名 |
@@ -249,7 +250,7 @@ df -h / /var /var/lib/containerd /root
 # 磁盘空闲建议：解压目录 ≥100G，/var/cpaas + containerd 还能再放下 OS 归档
 ls -lh /root/installer-core-v4.4.1-hybrid.tar \
        /root/cluster-api-provider-kubeadm.ALL.v1.0.14.tgz \
-       /root/cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz \
+       /root/cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz \
        /root/*.tar
 # chart 版本从文件名抄进 YAML
 ls /root/cluster-api-provider-*.tgz
@@ -277,7 +278,7 @@ printf '%s' "$PLAIN" | base64 | tr -d '\n'; echo
 
 printf 'registry password: ' && read -rs REGPLAIN && echo
 printf '%s' "$REGPLAIN" | base64 | tr -d '\n'; echo
-# 把输出填进 registry.password
+# registry.username 固定填 admin；把输出填进 registry.password
 ```
 
 不要把明文或填好密码的 JSON 提交 git。副本存成引导节点上的 `installer-config.json`（已 gitignore）。
@@ -341,7 +342,7 @@ PACKTOOL=/root/installer/res/amd64/packtool
 test -x "$PACKTOOL"
 $PACKTOOL pack push -h
 $PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-kubeadm.ALL.v1.0.14.tgz
-$PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
+$PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz
 ```
 
 引导仓库默认匿名。`setup.sh` 给仓库设了账号时，按 **刚才 help 里的认证参数** 再推（有的版本是 `-u 用户:密码`，有的是 `--username` / `--password`），并且 AppRelease 要挂 `global-registry-auth`（官方默认匿名路径不要造空 Secret）。
@@ -354,18 +355,28 @@ ctr namespaces ls || true
 ctr namespaces create bare-metal-os 2>/dev/null || true
 ctr -n bare-metal-os images import --all-platforms --no-unpack /root/<bare-metal-os-archive>.tar
 ctr -n bare-metal-os images ls -q
-# 应看到同一 tag 的两条：
-#   baremetal-base-image-iso:<os-image-tag>
-#   baremetal-base-image:<os-image-tag>
-export OS_IMAGE_TAG=<os-image-tag>
-for repo in baremetal-base-image baremetal-base-image-iso; do
+# 官方 K25 归档保留产品源名称和本地源 tag：
+#   kubeos-rootfs:baremetal
+#   kubeos-iso:baremetal
+# 不要把本地 baremetal 当作最终交付 tag，也不要改成旧的 generic repository names。
+export SOURCE_OS_TAG=baremetal
+export OS_IMAGE_TAG=alaudaos-feat-kubeos-provider-integration.ku.202609281026-0
+export OS_IMAGE_TAG_X86_64="${OS_IMAGE_TAG}.x86_64"
+for repo in kubeos-rootfs kubeos-iso; do
+  ctr -n bare-metal-os images tag \
+    "${repo}:${SOURCE_OS_TAG}" "${repo}:${OS_IMAGE_TAG_X86_64}"
   ctr -n bare-metal-os images push --plain-http \
-    "127.0.0.1:11443/tkestack/${repo}:${OS_IMAGE_TAG}" "${repo}:${OS_IMAGE_TAG}"
+    "127.0.0.1:11443/tkestack/${repo}:${OS_IMAGE_TAG_X86_64}" \
+    "${repo}:${OS_IMAGE_TAG_X86_64}"
   curl -s "http://127.0.0.1:11443/v2/tkestack/${repo}/tags/list"
 done
+ctr -n bare-metal-os images ls -q
+# 最终应看到：
+#   kubeos-iso:${OS_IMAGE_TAG_X86_64}
+#   kubeos-rootfs:${OS_IMAGE_TAG_X86_64}
 ```
 
-把这个 tag 填进所有 YAML 的 `<os-image-tag>`。**不要**在这一步 `ctr images rm`：交接后还要从同一个 `bare-metal-os` namespace 再推到成品仓库。
+把这个最终 tag 填进所有 YAML 的 `alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64`。**不要**在这一步 `ctr images rm`：交接后还要从同一个 `bare-metal-os` namespace 再推到成品仓库。
 
 ISO 给 SeedImage；catalog 给每一次 CAPI 重装。只导入 ISO、不填 catalog，控制面会卡在 `ImageCatalogMiss`。
 
@@ -409,7 +420,7 @@ kubectl -n cpaas-system get apprelease cluster-api-provider-kubeadm
 
 ```yaml
 platformUrl: https://156.3.1.26
-provider.imageCatalog.images.v1.35.6-acp.1.tag: <os-image-tag>
+provider.imageCatalog.images.v1.35.6-acp.1_amd64_alaudaos.k.25.tag: alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
 elemental.server.url: https://156.3.1.26:12443
 handoffHook.controlPlaneVIP: 156.3.1.50
 ```
@@ -425,7 +436,7 @@ catalog 必须有：
 
 ```yaml
 data:
-  v1.35.6-acp.1: 172.18.0.1:11443/tkestack/baremetal-base-image:<os-image-tag>
+  v1.35.6-acp.1_amd64_alaudaos.k.25: 172.18.0.1:11443/tkestack/kubeos-rootfs:alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
 ```
 
 没有就按官方方式补，不要覆盖其它 key。非 DR 基线：不要在引导 Registration 上设 `baremetal.cluster.io/system-agent-server-url`。
@@ -434,10 +445,10 @@ data:
 
 文件：`global/control-plane/manifests/01-registration-seedimage.yaml`
 
-改：`<os-image-tag>`。`baseImage` 必须是引导仓库：
+改：`kubeos-iso` 的最终 tag。`baseImage` 必须是引导仓库：
 
 ```text
-172.18.0.1:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+172.18.0.1:11443/tkestack/kubeos-iso:alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
 ```
 
 `device` 保持 `/dev/elemental-install-target`。`emulate-tpm: true`（没有硬件 TPM 时）。
@@ -583,7 +594,7 @@ findmnt /run/initramfs/live || echo NO_LIVE_ISO_ROOT
 lsblk -e7 -o NAME,PATH,TYPE,SIZE,MODEL,SERIAL,WWN,FSTYPE,LABEL,MOUNTPOINTS
 ```
 
-`/` 不能是 `LiveOS_rootfs`；要能看到 `COS_STATE`。仍是 Live 就不要进 Pool。
+`/` 不能是 `LiveOS_rootfs`；确认已经从安装磁盘启动，并能看到 KubeOS `alaudaos.k.25` 的系统身份。不要再检查 `COS_STATE`。仍是 Live 就不要进 Pool。
 
 ## 9. 三台 Inventory
 
@@ -794,7 +805,7 @@ kubectl --kubeconfig global-kubeconfig -n cpaas-system annotate baremetalcluster
 
 ```bash
 export GLOBAL_KUBECONFIG=./global-kubeconfig
-export OS_IMAGE_TAG=<os-image-tag>
+export OS_IMAGE_TAG=alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
 GLOBAL_REGISTRY_ADDRESS="$(kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" \
   get productbase.product.alauda.io base -o jsonpath='{.spec.registry.address}')"
 GLOBAL_REGISTRY_PASSWORD="$(kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
@@ -805,7 +816,7 @@ echo "${GLOBAL_REGISTRY_ADDRESS}"   # 应为 156.3.1.50:11443
 OS 镜像仍从引导节点的 `bare-metal-os` namespace 推（`--skip-verify` 必须带 `--local`）：
 
 ```bash
-for repo in baremetal-base-image baremetal-base-image-iso; do
+for repo in kubeos-rootfs kubeos-iso; do
   ctr -n bare-metal-os images push --local --skip-verify \
     -u "admin:${GLOBAL_REGISTRY_PASSWORD}" \
     "${GLOBAL_REGISTRY_ADDRESS}/tkestack/${repo}:${OS_IMAGE_TAG}" "${repo}:${OS_IMAGE_TAG}"
@@ -818,8 +829,8 @@ done
 
 ```bash
 ctr -n bare-metal-os images rm \
-  "baremetal-base-image:${OS_IMAGE_TAG}" \
-  "baremetal-base-image-iso:${OS_IMAGE_TAG}"
+  "kubeos-rootfs:${OS_IMAGE_TAG}" \
+  "kubeos-iso:${OS_IMAGE_TAG}"
 ```
 
 两个 provider tgz 用 packtool 推到 **同一** `${GLOBAL_REGISTRY_ADDRESS}`。成品仓库有认证。用户是 `admin`，密码是上面的 `GLOBAL_REGISTRY_PASSWORD`（明文，不是 installer JSON 里那串 base64）。**先看 help**，不要假设 `-u`：
@@ -835,7 +846,7 @@ $PACKTOOL pack push \
 $PACKTOOL pack push \
   -r "${GLOBAL_REGISTRY_ADDRESS}" \
   -u "admin:${GLOBAL_REGISTRY_PASSWORD}" \
-  -c /root/cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
+  -c /root/cluster-api-provider-baremetal.ALL.v1.0.0-fix.51.7.g41764fd0-feat-kubeos-support.tgz
 ```
 
 help 里若是 `--username` / `--password` 就改用那对。推完再 apply `global/management/`，不要空仓 apply。
@@ -859,7 +870,7 @@ kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
 - `global/management/01-kubeadm-provider-apprelease.yaml`
 - `global/management/02-baremetal-provider-apprelease.yaml`
 
-改 chart 版本、平台地址 `156.3.1.50`、`<os-image-tag>`。`repoURL` 是 `156.3.1.50:11443`，不是 `172.18.0.1`。
+改 chart 版本、平台地址 `156.3.1.50`、`alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64`。`repoURL` 是 `156.3.1.50:11443`，不是 `172.18.0.1`。
 
 ```bash
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" apply -f global/management/01-kubeadm-provider-apprelease.yaml
@@ -873,7 +884,7 @@ chart 在 Global 上建的 catalog **是空的**，不会继承引导集群那�
 ```bash
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
   patch configmap elemental-image-catalog --type merge \
-  -p "{\"data\":{\"v1.35.6-acp.1\":\"${GLOBAL_REGISTRY_ADDRESS}/tkestack/baremetal-base-image:${OS_IMAGE_TAG}\"}}"
+  -p "{\"data\":{\"v1.35.6-acp.1_amd64_alaudaos.k.25\":\"${GLOBAL_REGISTRY_ADDRESS}/tkestack/kubeos-rootfs:${OS_IMAGE_TAG}\"}}"
 kubectl --kubeconfig "${GLOBAL_KUBECONFIG}" -n cpaas-system \
   get configmap elemental-image-catalog -o jsonpath='{.data}'
 ```
@@ -919,7 +930,7 @@ kind delete cluster --name minialauda
 文件：`workload/control-plane/manifests/01-registration-seedimage.yaml`
 
 ```text
-baseImage: 156.3.1.50:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
+baseImage: 156.3.1.50:11443/tkestack/kubeos-iso:alaudaos-feat-kubeos-provider-integration.ku.202609281026-0.x86_64
 ```
 
 ```bash
@@ -1016,7 +1027,7 @@ ip -br addr show eth0.329
 
 ## ImageCatalogMiss
 
-catalog 没有 `v1.35.6-acp.1`，或 tag 和 OCI 归档不一致。补 catalog 后 **删那个 Failed 的 Machine** 让控制器重建，不要删整个 Cluster。Workload 第一份 YAML 之前必须先有 catalog。
+catalog 没有 `v1.35.6-acp.1_amd64_alaudaos.k.25`，或 KubeOS rootfs tag 和 OCI 归档不一致。补 catalog 后 **删那个 Failed 的 Machine** 让控制器重建，不要删整个 Cluster。Workload 第一份 YAML 之前必须先有 catalog。
 
 ## elemental-operator 起不来（成品 Global）
 
@@ -1041,7 +1052,7 @@ kubectl -n cpaas-system describe seedimage global-registration-iso
 kubectl -n cpaas-system get pods | grep -i elemental
 ```
 
-PVC `Pending` = 没有默认 StorageClass，20Gi 卷绑不上，ISO 永不构建。catalog 没有 `v1.35.6-acp.1`、`baseImage` 仓库地址错（引导阶段必须是 `172.18.0.1:11443`）、OS 镜像没推进仓库，同样会空。ISO 只能从能访问 `downloadURL` 的机器拉（通常就是引导节点）；笔记本直连多半 404。
+PVC `Pending` = 没有默认 StorageClass，20Gi 卷绑不上，ISO 永不构建。catalog 没有 `v1.35.6-acp.1_amd64_alaudaos.k.25`、`kubeos-iso` 的 `baseImage` 仓库地址错（引导阶段必须是 `172.18.0.1:11443`）、OS 镜像没推进仓库，同样会空。ISO 只能从能访问 `downloadURL` 的机器拉（通常就是引导节点）；笔记本直连多半 404。
 
 ## 拆 KIND 拆错了
 
