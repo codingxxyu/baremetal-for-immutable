@@ -17,7 +17,7 @@ spec:
     charts:
       - name: ait/chart-cluster-api-provider-kubeadm
         releaseName: cluster-api-provider-kubeadm
-        targetRevision: <kubeadm-provider-chart-version>
+        targetRevision: v1.0.14
         repoURL: 172.18.0.1:11443
     timeout: 120
     values:

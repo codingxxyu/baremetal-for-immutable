@@ -2,12 +2,12 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: <workload-cluster-name>-worker-deployment
+  name: hcs-workloadcluster-worker-deployment
   namespace: cpaas-system
   labels:
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
 spec:
-  clusterName: <workload-cluster-name>
+  clusterName: hcs-workloadcluster
   replicas: 1
   strategy:
     type: RollingUpdate
@@ -16,15 +16,15 @@ spec:
       maxUnavailable: 1
   selector:
     matchLabels:
-      cluster.x-k8s.io/deployment-name: <workload-cluster-name>-worker-deployment
+      cluster.x-k8s.io/deployment-name: hcs-workloadcluster-worker-deployment
   template:
     metadata:
       labels:
-        cluster.x-k8s.io/deployment-name: <workload-cluster-name>-worker-deployment
-        cluster.x-k8s.io/cluster-name: <workload-cluster-name>
-        pool.name: <workload-cluster-name>-workers
+        cluster.x-k8s.io/deployment-name: hcs-workloadcluster-worker-deployment
+        cluster.x-k8s.io/cluster-name: hcs-workloadcluster
+        pool.name: hcs-workloadcluster-workers
     spec:
-      clusterName: <workload-cluster-name>
+      clusterName: hcs-workloadcluster
       version: v1.35.6-acp.1
       nodeDrainTimeout: 5m
       nodeVolumeDetachTimeout: 5m
@@ -32,10 +32,10 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: <workload-cluster-name>-worker-kubeadm-config
+          name: hcs-workloadcluster-worker-kubeadm-config
           namespace: cpaas-system
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: BaremetalMachineTemplate
-        name: <workload-cluster-name>-worker-template
+        name: hcs-workloadcluster-worker-template
         namespace: cpaas-system

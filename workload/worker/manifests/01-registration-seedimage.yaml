@@ -4,18 +4,18 @@
 apiVersion: elemental.cattle.io/v1beta1
 kind: MachineRegistration
 metadata:
-  name: <workload-cluster-name>-worker-registration
+  name: hcs-workloadcluster-worker-registration
   namespace: cpaas-system
   labels:
     app.kubernetes.io/part-of: cluster-api-provider-baremetal
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
 spec:
-  machineName: "<workload-cluster-name>-worker-${System Information/UUID}"
+  machineName: "hcs-workloadcluster-worker-${System Information/UUID}"
   machineInventoryLabels:
     app.kubernetes.io/part-of: cluster-api-provider-baremetal
     pool.baremetal.alauda.io/eligible: "true"
     elemental.cattle.io/serial-number: "${System Information/Serial Number}"
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
   machineInventoryAnnotations:
     elemental.cattle.io/machine-uuid: "${System Information/UUID}"
   config:
@@ -34,18 +34,18 @@ spec:
 apiVersion: elemental.cattle.io/v1beta1
 kind: SeedImage
 metadata:
-  name: <workload-cluster-name>-worker-registration-iso
+  name: hcs-workloadcluster-worker-registration-iso
   namespace: cpaas-system
   labels:
     app.kubernetes.io/part-of: cluster-api-provider-baremetal
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
 spec:
   type: iso
   baseImage: 156.3.1.26:11443/tkestack/baremetal-base-image-iso:<os-image-tag>
   registrationRef:
     apiVersion: elemental.cattle.io/v1beta1
     kind: MachineRegistration
-    name: <workload-cluster-name>-worker-registration
+    name: hcs-workloadcluster-worker-registration
     namespace: cpaas-system
   targetPlatform: linux/amd64
   size: 20Gi

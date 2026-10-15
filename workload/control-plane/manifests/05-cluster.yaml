@@ -5,10 +5,10 @@
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: <workload-cluster-name>
+  name: hcs-workloadcluster
   namespace: cpaas-system
   labels:
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
     cluster-type: ProviderBaremetal
   annotations:
     capi.cpaas.io/resource-group-version: infrastructure.cluster.x-k8s.io/v1beta1
@@ -30,8 +30,8 @@ spec:
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: BaremetalCluster
-    name: <workload-cluster-name>
+    name: hcs-workloadcluster
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: <workload-cluster-name>-control-plane
+    name: hcs-workloadcluster-control-plane

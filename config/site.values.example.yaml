@@ -27,10 +27,10 @@ os_image_tag: <os-image-tag>
 
 # Customer Portal packages. Chart versions must come from the same ACP 4.4.1 payload.
 core_package: installer-core-v4.4.1-hybrid.tar
-kubeadm_provider_pack: cluster-api-provider-kubeadm.amd64.<kubeadm-provider-chart-version>.tgz
-baremetal_provider_pack: cluster-api-provider-baremetal.amd64.<baremetal-provider-chart-version>.tgz
-kubeadm_provider_chart_version: <kubeadm-provider-chart-version>
-baremetal_provider_chart_version: <baremetal-provider-chart-version>
+kubeadm_provider_pack: cluster-api-provider-kubeadm.ALL.v1.0.14.tgz
+baremetal_provider_pack: cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
+kubeadm_provider_chart_version: v1.0.14
+baremetal_provider_chart_version: v1.0.0-beta.6.ge76cf8f8
 bare_metal_os_archive: <bare-metal-os-archive>.tar
 
 bootstrap:
@@ -91,7 +91,7 @@ global:
       network_device: eth0
 
 workload:
-  cluster_name: <workload-cluster-name>   # must not be "global"
+  cluster_name: hcs-workloadcluster   # must not be "global"
   control_plane_replicas: 3
   worker_replicas: 1
   load_balancer_type: External
@@ -104,15 +104,15 @@ workload:
   kube_ovn_join_cidr: 100.65.0.0/16
   control_plane_inventories:
     - name: <workload-cp-inventory-1>
-      hostname: <workload-cluster-name>-cp-1
+      hostname: hcs-workloadcluster-cp-1
       network_device: eth0
     - name: <workload-cp-inventory-2>
-      hostname: <workload-cluster-name>-cp-2
+      hostname: hcs-workloadcluster-cp-2
       network_device: eth0
     - name: <workload-cp-inventory-3>
-      hostname: <workload-cluster-name>-cp-3
+      hostname: hcs-workloadcluster-cp-3
       network_device: eth0
   worker_inventories:
     - name: <workload-worker-inventory-1>
-      hostname: <workload-cluster-name>-worker-1
+      hostname: hcs-workloadcluster-worker-1
       network_device: eth0

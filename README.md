@@ -128,14 +128,11 @@ workload/worker/manifests/
 | 包 | 用途 |
 |---|---|
 | `installer-core-v4.4.1-hybrid.tar` | Core Package。`setup.sh` 起 KIND minialauda + 嵌入式仓库 + cpaas-installer |
-| `cluster-api-provider-kubeadm.amd64.<kubeadm-provider-chart-version>.tgz` | packtool 推进引导仓库 |
-| `cluster-api-provider-baremetal.amd64.<baremetal-provider-chart-version>.tgz` | 同上 |
+| `cluster-api-provider-kubeadm.ALL.v1.0.14.tgz` | packtool 推进引导仓库 |
+| `cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz` | 同上 |
 | `<bare-metal-os-archive>.tar` | Bare Metal OS **OCI 归档**（不是 qcow2）。里面是 `baremetal-base-image-iso` 和 `baremetal-base-image`，**同一个 tag** |
 
-Chart 版本从 tgz 文件名或 `helm show chart` 读，填进：
-
-- `<kubeadm-provider-chart-version>`
-- `<baremetal-provider-chart-version>`
+本场 chart 版本已写入 AppRelease `targetRevision`（从 `.ALL.` tgz 文件名）：kubeadm `v1.0.14`，baremetal `v1.0.0-beta.6.ge76cf8f8`。packtool 推完后若仓库里的 chart 版本字符串不一致，以 `helm show chart` / registry tags 为准再改 YAML。
 
 OS tag 在导入后读：
 
@@ -177,13 +174,13 @@ installer JSON 的 `registry.domain` 本场是 `156.3.1.26:11443`。不要写成
 | （已填）`156.3.1.50` | Global API VIP（TCP 6443）。写进 BaremetalCluster `host` / installer `console.host` / `ha.vip` / etcd SAN / `handoffHook.controlPlaneVIP`。**不是** `cpaas.io/registry-address` |
 | `<unique-vrid>` | 仅 Internal Alive。External 时 **删掉** `vrid` 字段 |
 | `<os-image-tag>` | OCI 归档里两个镜像共用的 tag |
-| `<kubeadm-provider-chart-version>` | kubeadm provider chart 版本 |
-| `<baremetal-provider-chart-version>` | BM provider chart 版本 |
+| （已填）`v1.0.14` | kubeadm provider `targetRevision`。现场包 `cluster-api-provider-kubeadm.ALL.v1.0.14.tgz` |
+| （已填）`v1.0.0-beta.6.ge76cf8f8` | BM provider `targetRevision`。现场包 `cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz` |
 | `<ssh-authorized-keys>` | `boot` 用户公钥，完整一行 |
 | `<global-machine-inventory-N>` | 注册后的 MachineInventory 名，不要猜 |
 | `<base64-platform-admin-password>` | installer JSON 里的平台管理员密码，**必须是 base64**，不是明文 |
 | `<registry-username>` / `<base64-registry-password>` | 平台仓库账号；密码同样是 base64 |
-| `<workload-cluster-name>` | 不能是 `global` |
+| （已填）`hcs-workloadcluster` | Workload 集群名（不能是 `global`）。hostname 为 `hcs-workloadcluster-cp-N` / `hcs-workloadcluster-worker-1`。inventory **name** 仍是注册后的 MachineInventory 名，不要猜 |
 | （已填）`156.3.1.95` | Workload API VIP（TCP 6443）。写进 Workload BaremetalCluster `host` / etcd SAN。**不是**仓库 |
 | `<workload-cp-inventory-N>` / `<workload-worker-inventory-1>` | Workload 注册后的 inventory 名 |
 
@@ -240,8 +237,8 @@ free -h
 df -h / /var /var/lib/containerd /root
 # 磁盘空闲建议：解压目录 ≥100G，/var/cpaas + containerd 还能再放下 OS 归档
 ls -lh /root/installer-core-v4.4.1-hybrid.tar \
-       /root/cluster-api-provider-kubeadm.amd64.*.tgz \
-       /root/cluster-api-provider-baremetal.amd64.*.tgz \
+       /root/cluster-api-provider-kubeadm.ALL.v1.0.14.tgz \
+       /root/cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz \
        /root/*.tar
 # chart 版本从文件名抄进 YAML
 ls /root/cluster-api-provider-*.tgz
@@ -332,8 +329,8 @@ packtool 打 **本机** 仓库，不要打 `172.18.0.1`。**先看 help**，不�
 PACKTOOL=/root/installer/res/amd64/packtool
 test -x "$PACKTOOL"
 $PACKTOOL pack push -h
-$PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-kubeadm.amd64.<kubeadm-provider-chart-version>.tgz
-$PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-baremetal.amd64.<baremetal-provider-chart-version>.tgz
+$PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-kubeadm.ALL.v1.0.14.tgz
+$PACKTOOL pack push -r "127.0.0.1:11443" -c /root/cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
 ```
 
 引导仓库默认匿名。`setup.sh` 给仓库设了账号时，按 **刚才 help 里的认证参数** 再推（有的版本是 `-u 用户:密码`，有的是 `--username` / `--password`），并且 AppRelease 要挂 `global-registry-auth`（官方默认匿名路径不要造空 Secret）。
@@ -386,7 +383,7 @@ kubectl -n cpaas-system get secret dex.tls
 
 文件：`global/control-plane/bootstrap/02-kubeadm-provider-apprelease.yaml`
 
-改：`<kubeadm-provider-chart-version>`、`156.3.1.26`。`repoURL` 保持 `172.18.0.1:11443`。
+改：`v1.0.14`、`156.3.1.26`。`repoURL` 保持 `172.18.0.1:11443`。
 
 ```bash
 kubectl apply -f global/control-plane/bootstrap/02-kubeadm-provider-apprelease.yaml
@@ -823,11 +820,11 @@ $PACKTOOL pack push -h
 $PACKTOOL pack push \
   -r "${GLOBAL_REGISTRY_ADDRESS}" \
   -u "admin:${GLOBAL_REGISTRY_PASSWORD}" \
-  -c /root/cluster-api-provider-kubeadm.amd64.<kubeadm-provider-chart-version>.tgz
+  -c /root/cluster-api-provider-kubeadm.ALL.v1.0.14.tgz
 $PACKTOOL pack push \
   -r "${GLOBAL_REGISTRY_ADDRESS}" \
   -u "admin:${GLOBAL_REGISTRY_PASSWORD}" \
-  -c /root/cluster-api-provider-baremetal.amd64.<baremetal-provider-chart-version>.tgz
+  -c /root/cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz
 ```
 
 help 里若是 `--username` / `--password` 就改用那对。推完再 apply `global/management/`，不要空仓 apply。

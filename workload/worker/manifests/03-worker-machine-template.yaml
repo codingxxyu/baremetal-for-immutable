@@ -2,12 +2,12 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: BaremetalMachineTemplate
 metadata:
-  name: <workload-cluster-name>-worker-template
+  name: hcs-workloadcluster-worker-template
   namespace: cpaas-system
   labels:
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
 spec:
   template:
     spec:
       machineInventoryPoolRef:
-        name: <workload-cluster-name>-worker-pool
+        name: hcs-workloadcluster-worker-pool

@@ -24,7 +24,7 @@ spec:
     charts:
       - name: ait/chart-cluster-api-provider-baremetal
         releaseName: cluster-api-provider-baremetal
-        targetRevision: <baremetal-provider-chart-version>
+        targetRevision: v1.0.0-beta.6.ge76cf8f8
         repoURL: 172.18.0.1:11443
     timeout: 120
     values:

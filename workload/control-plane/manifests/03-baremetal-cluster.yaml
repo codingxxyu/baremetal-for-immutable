@@ -7,10 +7,10 @@
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: BaremetalCluster
 metadata:
-  name: <workload-cluster-name>
+  name: hcs-workloadcluster
   namespace: cpaas-system
   labels:
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
   annotations:
     cpaas.io/registry-address: 156.3.1.26:11443
 spec:

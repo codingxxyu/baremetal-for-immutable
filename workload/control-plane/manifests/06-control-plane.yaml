@@ -5,10 +5,10 @@
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: <workload-cluster-name>-control-plane
+  name: hcs-workloadcluster-control-plane
   namespace: cpaas-system
   labels:
-    cpaas.io/cluster-name: <workload-cluster-name>
+    cpaas.io/cluster-name: hcs-workloadcluster
   annotations:
     controlplane.cluster.x-k8s.io/skip-kube-proxy: ""
 spec:
@@ -25,7 +25,7 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: BaremetalMachineTemplate
-      name: <workload-cluster-name>-control-plane-template
+      name: hcs-workloadcluster-control-plane-template
   kubeadmConfigSpec:
     format: cloud-config
     users:

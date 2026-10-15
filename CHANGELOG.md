@@ -12,6 +12,8 @@ Delivery gap-fill on registry addresses, official Step 1 variables, and post-han
 - Global API VIP is `156.3.1.50` (BaremetalCluster `host`, installer `console.host` / `ha.vip`, KCP etcd SAN, `handoffHook.controlPlaneVIP`). Workload API VIP is `156.3.1.95`. Neither is a registry address.
 - This site Core Package tree is `/root/installer` (KIND / packtool / nerdctl at `/root/installer/res/amd64`). Official example `/root/cpaas-install` is not this site.
 - README now includes official Step 1 `export` block, filled with this site's values. There is still **no renderer**: the exports are for the operator's shell / `setup.sh`; YAML is already baked.
+- Site provider packs (not `.amd64.`): `cluster-api-provider-kubeadm.ALL.v1.0.14.tgz` (`targetRevision: v1.0.14`) and `cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz` (`targetRevision: v1.0.0-beta.6.ge76cf8f8`). Written into AppRelease YAML.
+- Workload cluster name is `hcs-workloadcluster`. Pool hostnames: `hcs-workloadcluster-cp-1..3` / `hcs-workloadcluster-worker-1`. MachineInventory `name` is still filled after register.
 - First-delivery Global workers after handoff: `global/worker/post-global/` (platform `baseImage` `156.3.1.26:11443`). Bootstrap-phase YAML in `global/worker/manifests/` stays `DO-NOT-APPLY` (`172.18.0.1:11443`).
 
 ## 1.3.0 — 2026-10-16
