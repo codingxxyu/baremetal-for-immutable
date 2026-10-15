@@ -2,8 +2,8 @@
 # Default is External LB. For Internal Alive, set type: Internal and keep vrid.
 # For External, delete the vrid field before apply.
 # networkDevice is the CNI NIC. Override a single host on the pool instead.
-# cpaas.io/registry-address is PLATFORM_HOST:11443 (this site: 156.3.1.26:11443).
-# Never 127.0.0.1 / 172.18.0.1. LB host is the Workload API VIP (TCP 6443), not :11443.
+# cpaas.io/registry-address is REGISTRY_DOMAIN (156.3.1.50:11443) after Global is up.
+# Never 127.0.0.1 / 172.18.0.1 / bootstrap 156.3.1.26. LB host is Workload VIP 156.3.1.95.
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: BaremetalCluster
 metadata:
@@ -12,7 +12,7 @@ metadata:
   labels:
     cpaas.io/cluster-name: hcs-workloadcluster
   annotations:
-    cpaas.io/registry-address: 156.3.1.26:11443
+    cpaas.io/registry-address: 156.3.1.50:11443
 spec:
   controlPlaneLoadBalancer:
     type: External

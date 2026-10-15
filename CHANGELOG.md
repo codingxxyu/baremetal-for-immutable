@@ -4,17 +4,16 @@
 
 Delivery gap-fill on registry addresses, official Step 1 variables, and post-handoff traps. ACP still **v4.4.1**.
 
-- Site: `PLATFORM_HOST` = `HOST_IP` = `156.3.1.26`. Registry host does not change at handoff. What dies is KIND `127.0.0.1:11443` / `172.18.0.1:11443`.
-- `cpaas.io/registry-address` is **not** the Global API VIP. It is `<host>:11443` only (no `/v2/`).
-- Official installer rewrites Cluster / DCSCluster `cpaas.io/registry-address` to `REGISTRY_DOMAIN`. On this site that string is already `156.3.1.26:11443`, so the rewrite is a no-op. BaremetalCluster is **not** in the rewrite set; leave it if it already shows `156.3.1.26:11443`. Patch only if it shows loopback / KIND.
-- Do **not** re-apply Global `03` / `05` after installer (other live fields, not the registry host).
-- Workload Cluster / BaremetalCluster use `156.3.1.26:11443` (platform registry on the same IP). Never `172.18.0.1`.
-- Global API VIP is `156.3.1.50` (BaremetalCluster `host`, installer `console.host` / `ha.vip`, KCP etcd SAN, `handoffHook.controlPlaneVIP`). Workload API VIP is `156.3.1.95`. Neither is a registry address.
+- Site: `HOST_IP` = `156.3.1.26` (bootstrap). `PLATFORM_HOST` / `CONTROL_PLANE_VIP` / finished-Global registry = `156.3.1.50` (6443 + 80/443 + 11443). What dies at KIND teardown is `127.0.0.1:11443` / `172.18.0.1:11443`.
+- `cpaas.io/registry-address` is `<host>:11443` only (no `/v2/`). First apply Global Cluster = `156.3.1.26:11443`. After installer it must be `156.3.1.50:11443`.
+- Official installer rewrites Cluster / DCSCluster to `REGISTRY_DOMAIN` (`156.3.1.50:11443`). BaremetalCluster is **not** in the rewrite set — patch it after Success. Do **not** re-apply Global `03` / `05`.
+- Workload Cluster / BaremetalCluster / management AppRelease / post-handoff SeedImage use `156.3.1.50:11443`. Never `172.18.0.1` or leftover bootstrap `156.3.1.26:11443`.
+- Global VIP `156.3.1.50` is API + platform entry + platform registry. Workload API VIP is `156.3.1.95`.
 - This site Core Package tree is `/root/installer` (KIND / packtool / nerdctl at `/root/installer/res/amd64`). Official example `/root/cpaas-install` is not this site.
 - README now includes official Step 1 `export` block, filled with this site's values. There is still **no renderer**: the exports are for the operator's shell / `setup.sh`; YAML is already baked.
 - Site provider packs (not `.amd64.`): `cluster-api-provider-kubeadm.ALL.v1.0.14.tgz` (`targetRevision: v1.0.14`) and `cluster-api-provider-baremetal.ALL.v1.0.0-beta.6.ge76cf8f8.tgz` (`targetRevision: v1.0.0-beta.6.ge76cf8f8`). Written into AppRelease YAML.
 - Workload cluster name is `hcs-workloadcluster`. Pool hostnames: `hcs-workloadcluster-cp-1..3` / `hcs-workloadcluster-worker-1`. MachineInventory `name` is still filled after register.
-- First-delivery Global workers after handoff: `global/worker/post-global/` (platform `baseImage` `156.3.1.26:11443`). Bootstrap-phase YAML in `global/worker/manifests/` stays `DO-NOT-APPLY` (`172.18.0.1:11443`).
+- First-delivery Global workers after handoff: `global/worker/post-global/` (platform `baseImage` `156.3.1.50:11443`). Bootstrap-phase YAML in `global/worker/manifests/` stays `DO-NOT-APPLY` (`172.18.0.1:11443`).
 
 ## 1.3.0 — 2026-10-16
 

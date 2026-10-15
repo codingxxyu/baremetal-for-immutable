@@ -23,16 +23,19 @@ official_step4: fragment-not-applyable
 # stay the v4.4.0 row until the matrix publishes a 4.4.1 line.
 #   https://docs.alauda.cn/immutable-infra/1.0/en/overview/os-support-matrix.html
 #   https://docs.alauda.io/container_platform/4.4/overview/release_notes.html
-# Site: PLATFORM_HOST = HOST_IP = 156.3.1.26. installer rewrite of Cluster
-# cpaas.io/registry-address is a no-op on the host string. BaremetalCluster
-# is NOT in the official rewrite set. What must never appear after KIND is
-# gone: 127.0.0.1:11443 and 172.18.0.1:11443.
+# HOST_IP 156.3.1.26 = bootstrap. PLATFORM_HOST / REGISTRY_DOMAIN = 156.3.1.50
+# (Global VIP: 6443 API + 80/443 console + 11443 registry). Installer rewrites
+# Cluster cpaas.io/registry-address 156.3.1.26:11443 → 156.3.1.50:11443.
+# BaremetalCluster is NOT in the rewrite set — patch after Success.
+# Never 127.0.0.1:11443 or 172.18.0.1:11443 after KIND is gone.
 registry_address:
-  host: 156.3.1.26
-  node_and_platform: 156.3.1.26:11443
+  host_ip: 156.3.1.26
+  node_first_apply: 156.3.1.26:11443
+  platform_host: 156.3.1.50
+  registry_domain: 156.3.1.50:11443
   kind_loopback: 127.0.0.1:11443
   kind_incluster: 172.18.0.1:11443
-  after_installer_baremetalcluster: leave-if-already-host-ip
+  after_installer_baremetalcluster: patch-to-registry-domain
 control_plane_vip:
   global: 156.3.1.50
   workload: 156.3.1.95

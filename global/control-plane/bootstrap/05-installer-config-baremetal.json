@@ -4,7 +4,7 @@
     "password": "<base64-platform-admin-password>"
   },
   "registry": {
-    "domain": "156.3.1.26:11443",
+    "domain": "156.3.1.50:11443",
     "username": "<registry-username>",
     "password": "<base64-registry-password>"
   },
@@ -12,7 +12,7 @@
     "host": [
       "156.3.1.50"
     ],
-    "globalHost": "156.3.1.26",
+    "globalHost": "156.3.1.50",
     "httpPort": 80,
     "httpsPort": 443,
     "cert": {

@@ -38,8 +38,8 @@ bootstrap:
   host_ip: 156.3.1.26
   local_registry: 127.0.0.1:11443          # packtool / ctr push from the bootstrap node
   bootstrap_registry: 172.18.0.1:11443     # AppRelease repoURL (Pods inside KIND)
-  # Cluster annotation. This site PLATFORM_HOST = HOST_IP, so installer
-  # rewrite of Cluster is a no-op. Do not put the API VIP here.
+  # First-apply Cluster annotation (NODE_REGISTRY_ADDRESS). Installer rewrites
+  # Cluster to platform.registry_domain. Never 127.0.0.1 / 172.18.0.1.
   node_registry: 156.3.1.26:11443
   elemental_server: https://156.3.1.26:12443
   # This site already extracted Core Package so the installer tree is /root/installer
@@ -49,11 +49,12 @@ bootstrap:
   packtool: /root/installer/res/amd64/packtool
 
 platform:
-  # Console / elemental after handoff. This site = HOST_IP, not the API VIP.
-  host: 156.3.1.26
-  # Permanent cpaas.io/registry-address after installer. host:11443, not :6443.
-  registry_domain: 156.3.1.26:11443
-  # API VIP (TCP 6443). Not the registry. BaremetalCluster.spec.controlPlaneLoadBalancer.host.
+  # Official PLATFORM_HOST: console / dex / elemental after handoff, and the
+  # finished-Global registry front. This site that is the Global VIP 156.3.1.50
+  # (6443 API + 80/443 console + 11443 registry). Bootstrap 156.3.1.26 is HOST_IP only.
+  host: 156.3.1.50
+  # Official REGISTRY_DOMAIN = PLATFORM_HOST:11443.
+  registry_domain: 156.3.1.50:11443
   control_plane_vip: 156.3.1.50
   control_plane_port: 6443
   load_balancer_type: External   # or Internal

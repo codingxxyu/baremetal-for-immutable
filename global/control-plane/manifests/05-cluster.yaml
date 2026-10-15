@@ -1,10 +1,9 @@
 # APPLY-ON: bootstrap (minialauda)  — first create only
-# Site: PLATFORM_HOST = HOST_IP = 156.3.1.26, so NODE_REGISTRY_ADDRESS and
-# REGISTRY_DOMAIN are the same host:11443. Installer rewrite of this Cluster
-# annotation is a no-op on the host string. Do NOT re-apply after installer
-# anyway (other fields / CIDRs must stay as reconciled).
-# This is NOT 127.0.0.1 or 172.18.0.1 — those die when KIND is removed.
-# BaremetalCluster is a different object; see 03-baremetal-cluster.yaml.
+# First apply: NODE_REGISTRY_ADDRESS 156.3.1.26:11443 so Global CP nodes can
+# pull OS from the bootstrap registry. Official installer rewrites THIS Cluster
+# annotation to REGISTRY_DOMAIN 156.3.1.50:11443. Do NOT re-apply after installer
+# (other live fields / CIDRs). BaremetalCluster is NOT rewritten — patch 03 after
+# Success. Never 127.0.0.1 or 172.18.0.1.
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
